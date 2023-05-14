@@ -1,10 +1,10 @@
 name:                theodore
-version:             0.1.0.0
+version:             0.1
 github:              "githubuser/theodore"
-license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2023 Author name here"
+license:             mit
+author:              "Andrija Urosevic"
+maintainer:          "andrija.urosevic@matf.bg.ac.rs"
+copyright:           "2023 Andrija Urosevic"
 
 extra-source-files:
 - README.md
@@ -57,3 +57,6 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - theodore
+    - tasty >= 0.7
+    - tasty-hunit >= 0.10
+    - tasty-quickcheck >= 0.10

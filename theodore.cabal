@@ -5,14 +5,14 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           theodore
-version:        0.1.0.0
+version:        0.1
 description:    Please see the README on GitHub at <https://github.com/githubuser/theodore#readme>
 homepage:       https://github.com/githubuser/theodore#readme
 bug-reports:    https://github.com/githubuser/theodore/issues
-author:         Author name here
-maintainer:     example@example.com
-copyright:      2023 Author name here
-license:        BSD3
+author:         Andrija Urosevic
+maintainer:     andrija.urosevic@matf.bg.ac.rs
+copyright:      2023 Andrija Urosevic
+license:        mit
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
@@ -26,6 +26,7 @@ source-repository head
 library
   exposed-modules:
       Lib
+      Syntax
   other-modules:
       Paths_theodore
   hs-source-dirs:
@@ -57,5 +58,8 @@ test-suite theodore-test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , tasty >=0.7
+    , tasty-hunit >=0.10
+    , tasty-quickcheck >=0.10
     , theodore
   default-language: Haskell2010
