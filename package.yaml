@@ -1,6 +1,6 @@
 name:                theodore
 version:             0.1
-github:              "githubuser/theodore"
+github:              "andrija-urosevic/theodore"
 license:             mit
 author:              "Andrija Urosevic"
 maintainer:          "andrija.urosevic@matf.bg.ac.rs"
@@ -46,6 +46,7 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - theodore
+    - random >= 1.2
 
 tests:
   theodore-test:
@@ -60,3 +61,5 @@ tests:
     - tasty >= 0.7
     - tasty-hunit >= 0.10
     - tasty-quickcheck >= 0.10
+    - QuickCheck
+    - containers >= 0.6
