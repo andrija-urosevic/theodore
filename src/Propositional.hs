@@ -2,10 +2,12 @@ module Propositional
     ( Vars
     , PropFormula (Top, Bot, Var, Neg, Conj, Disj, Impl, Eqiv)
     , PartialValuation
+    , mkPartialValuation
     , complexity
     , depth
     , vars
     , subformulas
+    , evalVar
     , eval
     , truthTable
     , isSat
@@ -30,22 +32,19 @@ data PropFormula
     | Eqiv PropFormula PropFormula
     deriving (Eq, Ord)
 
-toString :: PropFormula -> String
-toString Top            = "⊤"
-toString Bot            = "⊥"
-toString (Var p)        = p
-toString (Neg f)        = "(¬ " ++ toString f ++ ")"
-toString (Conj f1 f2)   = "(" ++ toString f1 ++ " ∧ " ++ toString f2 ++ ")"
-toString (Disj f1 f2)   = "(" ++ toString f1 ++ " ∨ " ++ toString f2 ++ ")"
-toString (Impl f1 f2)   = "(" ++ toString f1 ++ " → " ++ toString f2 ++ ")"
-toString (Eqiv f1 f2)   = "(" ++ toString f1 ++ " ↔ " ++ toString f2 ++ ")"
-
 instance Show PropFormula where
-    show = toString
+    show Top            = "⊤"
+    show Bot            = "⊥"
+    show (Var p)        = p
+    show (Neg f)        = "(¬ " ++ show f ++ ")"
+    show (Conj f1 f2)   = "(" ++ show f1 ++ " ∧ " ++ show f2 ++ ")"
+    show (Disj f1 f2)   = "(" ++ show f1 ++ " ∨ " ++ show f2 ++ ")"
+    show (Impl f1 f2)   = "(" ++ show f1 ++ " → " ++ show f2 ++ ")"
+    show (Eqiv f1 f2)   = "(" ++ show f1 ++ " ↔ " ++ show f2 ++ ")"
 
 -- TODO: instance Read PropFormula ...
 
-mkPartialValuation :: [String] -> PartialValuation
+mkPartialValuation :: Vars -> PartialValuation
 mkPartialValuation xs = let pairs = map (\x -> (x, True)) xs
                          in Map.fromList pairs
 
@@ -103,9 +102,9 @@ eval (Impl f1 f2) v = not (eval f1 v) || (eval f2 v)
 eval (Eqiv f1 f2) v = (not (eval f1 v) || (eval f2 v)) && ((eval f1 v) || not (eval f2 v))
 
 sublists :: [a] -> [[a]]
-sublists [] = [[]]
-sublists (x : xs) = let sub = sublists xs
-                     in map (\a -> x : a) sub ++ sub
+sublists []         = [[]]
+sublists (x : xs)   = let sub = sublists xs
+                       in map (\a -> x : a) sub ++ sub
 
 truthTable :: PropFormula -> [([Bool], Bool)]
 truthTable f = let varSet       = vars f

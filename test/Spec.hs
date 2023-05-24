@@ -29,6 +29,40 @@ negr = NormalForm.Neg "r"
 nnfExample :: NnfForm
 nnfExample = NormalForm.Conj (NormalForm.Disj (NormalForm.Lit p) (NormalForm.Lit negr)) (NormalForm.Disj (NormalForm.Lit q) (NormalForm.Lit NormalForm.Bot))
 
+nnfExample1 :: NnfForm
+nnfExample1 = NormalForm.Conj (NormalForm.Lit (NormalForm.Bot)) (NormalForm.Lit (NormalForm.Neg "p"))
+
+exClause0 :: Clause
+exClause0 = [NormalForm.Pos "p"]
+
+exClause1 :: Clause
+exClause1 = [NormalForm.Pos "p", NormalForm.Neg "q", NormalForm.Pos "r"]
+
+exClause2 :: Clause
+exClause2 = [NormalForm.Pos "r", NormalForm.Neg "s"]
+
+exCnf0 :: CnfForm
+exCnf0 = 
+    [ [NormalForm.Pos "p"]
+    , [NormalForm.Neg "p", NormalForm.Pos "q", NormalForm.Neg "r"]
+    , [NormalForm.Neg "p", NormalForm.Neg "q"]
+    ]
+
+exCnf1 :: CnfForm
+exCnf1 =
+    [ [NormalForm.Pos "p", NormalForm.Neg "q"]
+    , [NormalForm.Pos "p", NormalForm.Pos "q"]
+    , [NormalForm.Neg "p", NormalForm.Neg "r"]
+    , [NormalForm.Neg "p", NormalForm.Pos "r"]
+    ]
+
+exCnf2 :: CnfForm
+exCnf2 =
+    [ [NormalForm.Pos "p", NormalForm.Pos "q"]
+    , [NormalForm.Neg "p"]
+    , [NormalForm.Neg "q"]
+    ]
+
 tests :: TestTree
 tests = testGroup "All tests"
   [ unitTests 
@@ -64,22 +98,29 @@ propertyTests = testGroup "Property tests"
     [ testProperty "Depth is always less then or equal to complexity" propertyComplexityLEQDepth
     , testProperty "Double negation of literal is id" propertyDoubleNegationLiteral
     , testProperty "Double negation of Nnf is id" propertyDoubleNegationNnf
+    , testProperty "evalNnf f = evalCnf (toCnf f)" propertyEvalNnfCnf
+    , testProperty "eval f = evalNnf (toNnfForm f)" propertyEvalPropNnf
     ]
+
+instance {-# OVERLAPS #-} Arbitrary PartialValuation where
+    arbitrary = do
+        m <- chooseInt(1, 10)
+        return (mkPartialValuation (randomVars m))
 
 instance Arbitrary Literal where
     arbitrary = do
         m <- chooseInt(1, 10)
-        randomLit (randomVars m)
+        randomLiteral (randomVars m)
 
 instance Arbitrary NnfForm where
     arbitrary = do
-        n <- chooseInt(1, 10)
+        n <- chooseInt(1, 5)
         m <- chooseInt(1, 10)
         randomNnf n (randomVars m)
 
 instance Arbitrary PropFormula where
     arbitrary = do
-        n <- chooseInt(1, 10)
+        n <- chooseInt(1, 5)
         m <- chooseInt(1, 10)
         randomFormula n (randomVars m)
     
@@ -89,20 +130,20 @@ randomItem = elements
 randomVars :: Int -> Vars
 randomVars n = map (\x -> 'p' : show x) [1..n]
 
-randomLit :: Vars -> Gen Literal
-randomLit varSet = do
+randomLiteral :: Vars -> Gen Literal
+randomLiteral varSet = do
     var <- randomItem varSet
     j <- chooseInt (1, 4)
     case j of
-        1           -> return NormalForm.Top
-        2           -> return NormalForm.Bot
-        3           -> return (NormalForm.Pos var)
-        4           -> return (NormalForm.Neg var)
-        otherwise   -> error "Invalid state"
+        1 -> return NormalForm.Top
+        2 -> return NormalForm.Bot
+        3 -> return (NormalForm.Pos var)
+        4 -> return (NormalForm.Neg var)
+        _ -> error "Invalid state"
 
 randomNnf :: Int -> Vars -> Gen NnfForm
 randomNnf 0 varSet = do
-    l <- randomLit varSet
+    l <- randomLiteral varSet
     return (NormalForm.Lit l)
 randomNnf n varSet = do
     connective <- randomItem [NormalForm.Disj, NormalForm.Conj]
@@ -115,11 +156,11 @@ randomAtom varSet = do
     var <- randomItem varSet
     j <- chooseInt(1, 4)
     case j of
-        1           -> return Prop.Top
-        2           -> return Prop.Bot
-        3           -> return (Prop.Var var)
-        4           -> return (Prop.Neg (Prop.Var var))
-        otherwise   -> error "Invalid state"
+        1 -> return Prop.Top
+        2 -> return Prop.Bot
+        3 -> return (Prop.Var var)
+        4 -> return (Prop.Neg (Prop.Var var))
+        _ -> error "Invalid state"
 
 randomFormula :: Int -> Vars -> Gen PropFormula
 randomFormula 0 varSet = randomAtom varSet
@@ -137,4 +178,10 @@ propertyDoubleNegationLiteral l = negateLit (negateLit l) == l
 
 propertyDoubleNegationNnf :: NnfForm -> Bool
 propertyDoubleNegationNnf f = negateNnf (negateNnf f) == f
+
+propertyEvalNnfCnf :: NnfForm -> PartialValuation -> Bool
+propertyEvalNnfCnf f v = evalNnf f v == evalCnf (fromNnfToCnf f) v
+
+propertyEvalPropNnf :: PropFormula -> PartialValuation -> Bool
+propertyEvalPropNnf f v = eval f v == evalNnf (toNnfForm f) v
 
