@@ -9,6 +9,7 @@ import qualified Data.Map as Map
 
 import Propositional as Prop
 import NormalForm as NormalForm
+import FOL as FOL
 
 main :: IO ()
 main = defaultMain tests
@@ -65,6 +66,23 @@ exCnf2 =
     , [NormalForm.Neg "q"]
     ]
 
+binAirthInterp :: Interp Bool 
+binAirthInterp = Map.fromList
+    [ ("+", \ args -> (args !! 0) /= (args !! 1))
+    , ("*", \ args -> (args !! 0) && (args !! 1))
+    , ("0", \ _    -> False)
+    , ("1", \ _    -> True)
+    ]
+
+bitArithAssigment :: Assigment Bool
+bitArithAssigment = Map.fromList
+    [ ("p", True)
+    , ("q", False)
+    ]
+
+bitArithTerm :: Term
+bitArithTerm = FOL.Fun "+" [FOL.Fun "+" [FOL.Var "p", mkConst "0"], FOL.Fun "*" [FOL.Var "p", FOL.Var "q"]]
+
 tests :: TestTree
 tests = testGroup "All tests"
   [ unitTests 
@@ -93,6 +111,8 @@ unitTests = testGroup "Unit tests"
         negateLit (negateLit p) @?= p
     , testCase "negateLit Neg" $
         negateLit (negateLit negr) @?= negr
+    , testCase "bitArith" $
+        evalTerm binAirthInterp bitArithAssigment bitArithTerm @?= True 
     ]
 
 propertyTests :: TestTree
