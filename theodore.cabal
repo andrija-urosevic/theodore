@@ -35,6 +35,7 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       base >=4.7 && <5
+    , containers
   default-language: Haskell2010
 
 executable theodore-exe
@@ -46,6 +47,7 @@ executable theodore-exe
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , containers
     , random >=1.2
     , theodore
   default-language: Haskell2010
@@ -61,7 +63,7 @@ test-suite theodore-test
   build-depends:
       QuickCheck
     , base >=4.7 && <5
-    , containers >=0.6
+    , containers
     , tasty >=0.7
     , tasty-hunit >=0.10
     , tasty-quickcheck >=0.10

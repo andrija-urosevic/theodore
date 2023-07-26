@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeSynonymInstances #-}
+
 module NormalForm
     ( Literal (Top, Bot, Pos, Neg)
     , NnfForm (Lit, Conj, Disj)

@@ -21,6 +21,7 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+- containers
 
 ghc-options:
 - -Wall
@@ -47,6 +48,7 @@ executables:
     dependencies:
     - theodore
     - random >= 1.2
+    - containers
 
 tests:
   theodore-test:
@@ -62,4 +64,4 @@ tests:
     - tasty-hunit >= 0.10
     - tasty-quickcheck >= 0.10
     - QuickCheck
-    - containers >= 0.6
+    - containers
