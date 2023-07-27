@@ -66,7 +66,7 @@ exCnf2 =
     , [NormalForm.Neg "q"]
     ]
 
-binAirthInterp :: Interp Bool 
+binAirthInterp :: FnInterp Bool
 binAirthInterp = Map.fromList
     [ ("+", \ args -> (args !! 0) /= (args !! 1))
     , ("*", \ args -> (args !! 0) && (args !! 1))
@@ -81,7 +81,19 @@ bitArithAssigment = Map.fromList
     ]
 
 bitArithTerm :: Term
-bitArithTerm = FOL.Fun "+" [FOL.Fun "+" [FOL.Var "p", mkConst "0"], FOL.Fun "*" [FOL.Var "p", FOL.Var "q"]]
+bitArithTerm = FOL.Fun "+" [FOL.Fun "+" [FOL.Var "p", mkConstTerm "0"], FOL.Fun "*" [FOL.Var "p", FOL.Var "q"]]
+
+f1 :: Formula
+f1 = FOL.Rel "even" [FOL.Var "x"]
+
+f2 :: Formula
+f2 = FOL.Rel "odd" [FOL.Var "x"]
+
+f3 :: Formula
+f3 = FOL.Alls "x" (FOL.Impl (FOL.Rel "even" [FOL.Var "x"]) (FOL.Rel "eq" [FOL.Var "x", mkConstTerm "zero"]))
+
+f4 :: Formula
+f4 = FOL.Alls "x" (FOL.Impl (FOL.Neg (FOL.Rel "even" [FOL.Var "x"])) (FOL.Exis "y" (FOL.Rel "lt" [FOL.Var "x", FOL.Var "y"])))
 
 tests :: TestTree
 tests = testGroup "All tests"
