@@ -242,6 +242,39 @@ babyAssigment1 = Map.fromList [ ("x", 5) ]
 babyAssigment2 :: Assigment Int
 babyAssigment2 = Map.fromList [ ("x", 6) ]
 
+-- f(x, g(y))
+t1 :: Term
+t1 = FOL.Fun "f" [FOL.Var "x", FOL.Fun "g" [FOL.Var "y"]]
+
+-- f(f(z), w)
+t2 :: Term
+t2 = FOL.Fun "f" [FOL.Fun "f" [FOL.Var "z"], FOL.Var "w"]
+
+-- f(f(z), g(y))
+t3 :: Term
+t3 = FOL.Fun "f" [FOL.Fun "f" [FOL.Var "z"], FOL.Fun "g" [FOL.Var "y"]]
+
+-- f(x, y)
+t4 :: Term
+t4 = FOL.Fun "f" [FOL.Var "x", FOL.Var "y"]
+
+-- f(y, x)
+t5 :: Term
+t5 = FOL.Fun "f" [FOL.Var "y", FOL.Var "x"]
+
+-- x0, x1, x2, x3, x4
+x0 = FOL.Var "x0"
+x1 = FOL.Var "x1"
+x2 = FOL.Var "x2"
+x3 = FOL.Var "x3"
+x4 = FOL.Var "x4"
+
+-- f11, f22, f33, f44
+f11 = FOL.Fun "f" [x1, x1]
+f22 = FOL.Fun "f" [x2, x2]
+f33 = FOL.Fun "f" [x3, x3]
+f44 = FOL.Fun "f" [x4, x4]
+
 tests :: TestTree
 tests = testGroup "All tests"
   [ unitTests
@@ -304,6 +337,20 @@ unitTests = testGroup "Unit tests"
         evalFormula babyArithModel trivAssigment babyFormula13 @?= True
     , testCase ("eval " ++ show babyFormula14 ++ " = False") $
         evalFormula babyArithModel trivAssigment babyFormula14 @?= False
+    , testCase ("unify [(" ++ show t1 ++ ", " ++ show t2 ++")] = [(\"w\",g(y)),(\"x\",f(z))]") $
+        unify [(t1, t2)] @?= Just [("w", FOL.Fun "g" [FOL.Var "y"]), ("x", FOL.Fun "f" [FOL.Var "z"])]
+    , testCase ("unifyAndApply " ++ show [(t1, t2)] ++ " = " ++ show [(t3, t3)]) $
+        unifyAndApply [(t1, t2)] @?= Just [(t3, t3)]
+    , testCase ("unify " ++ show [(t4, t5)] ++ " = Nothing") $
+        unify [(t4, t5)] @?= Nothing
+    , testCase ("unifyAndApply " ++ show [(t4, t5)] ++ " = Nothing") $
+        unify [(t4, t5)] @?= Nothing
+    , testCase ("unify " ++ show [(t1, t5)] ++ " = Nothing") $
+        unify [(t1, t5)] @?= Nothing
+    , testCase ("unifyAndApply " ++ show [(t1, t5)] ++ " = Nothing") $
+        unifyAndApply [(t1, t5)] @?= Nothing
+    , testCase ("unifyAndApply " ++ show [(x0, f11), (x1, f22), (x2, f33), (x3, f44)] ++ " /= Nothing") $
+        unifyAndApply [(x0, f11), (x1, f22), (x2, f33), (x3, f44)] /= Nothing @?= True
     ]
 
 propertyTests :: TestTree
@@ -313,6 +360,7 @@ propertyTests = testGroup "Property tests"
     , testProperty "Double negation of Nnf is id" propertyDoubleNegationNnf
     , testProperty "evalNnf f = evalCnf (toCnf f)" propertyEvalNnfCnf
     , testProperty "eval f = evalNnf (toNnfForm f)" propertyEvalPropNnf
+    , testProperty "unifyAndApply [(t1, t2)] = [(t1', t2')] -> t1' == t2'" propertyUnifyAndApplyEq
     ]
 
 instance {-# OVERLAPS #-} Arbitrary PartialValuation where
@@ -336,12 +384,22 @@ instance Arbitrary PropFormula where
         n <- chooseInt(1, 5)
         m <- chooseInt(1, 10)
         randomFormula n (randomVars m)
+
+instance Arbitrary Term where
+    arbitrary = do
+        n <- chooseInt(1, 5)
+        m <- chooseInt(1, 10)
+        arity <- sequence [chooseInt(0, 3) | _ <- [1..n]]
+        randomTerm n (randomFuns n arity) (randomVars m)
     
 randomItem :: [a] -> Gen a
 randomItem = elements
 
 randomVars :: Int -> Vars
 randomVars n = map (\x -> 'p' : show x) [1..n]
+
+randomFuns :: Int -> [Int] -> Funs
+randomFuns n arity = zip (map (\x -> 'f' : show x) [1..n]) arity
 
 randomLiteral :: Vars -> Gen Literal
 randomLiteral varSet = do
@@ -383,6 +441,18 @@ randomFormula n varSet = do
     f2 <- randomFormula (n - 1) varSet
     return (connective f1 f2)
 
+randomConstTerm :: Vars -> Gen Term
+randomConstTerm varSet = do
+    var <- randomItem varSet
+    return (mkConstTerm var)
+
+randomTerm :: Int -> Funs -> Vars -> Gen Term
+randomTerm 0 _ varSet = randomConstTerm varSet
+randomTerm n funSet varSet = do
+    f <- randomItem funSet
+    args <- sequence [randomTerm (n - 1) funSet varSet | _ <- [1..snd f]]
+    return (FOL.Fun (fst f) args)
+
 propertyComplexityLEQDepth :: PropFormula -> Bool
 propertyComplexityLEQDepth f = depth f <= complexity f
 
@@ -398,3 +468,9 @@ propertyEvalNnfCnf f v = evalNnf f v == evalCnf (fromNnfToCnf f) v
 propertyEvalPropNnf :: PropFormula -> PartialValuation -> Bool
 propertyEvalPropNnf f v = eval f v == evalNnf (toNnfForm f) v
 
+propertyUnifyAndApplyEq :: Term -> Term -> Bool
+propertyUnifyAndApplyEq t1 t2 =
+    case unifyAndApply [(t1, t2)] of
+        Just [(t1', t2')]   -> t1' == t2'
+        Just _              -> error "Invalid state!"
+        Nothing             -> True
