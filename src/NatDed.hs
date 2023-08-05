@@ -12,10 +12,9 @@ module NatDed
     , false
     , split
     , cases
-    --, eqivI
-    --, negI
-    --, conjE
-    --, disjE
+    , apply
+    , eqivE
+    , turn
     ) where
 
 import FOL
@@ -120,36 +119,80 @@ false assmName (g : gs) = case (cncls g) of
 -- Apply conjE
 split :: String -> Goal -> Goal
 split assmName []       = error "Nothing to apply split to!"
-split assmName (g : gs) = Subgoal (split' assmName (assms g)) (cncls g) : gs
-    where split' assmName []        = error "Invalid rule!"
-          split' assmName (a : as)  = 
+split assmName (g : gs) = Subgoal (split' (assms g)) (cncls g) : gs
+    where split' []         = error "Invalid rule!"
+          split' (a : as)   = 
             if (name a) == assmName 
                 then (split'' a) ++ as 
-                else a : split' assmName as
-          split'' assm  = case (formula assm) of
-            Conj f1 f2  -> [ Assumption (assmName ++ "1") f1
-                           , Assumption (assmName ++ "2") f2 ]
-            _           -> error "Invalid rule!"
+                else a : split' as
+          split'' assm      = case (formula assm) of
+            Conj f1 f2      -> [ Assumption (name assm ++ "1") f1
+                               , Assumption (name assm ++ "2") f2 ]
+            _               -> error "Invalid rule!"
 
+-- disjE
 cases :: String -> Goal -> Goal
 cases assmName []       = error "Nothing to apply cases to!"
-cases assmName (g : gs) = Subgoal (left' assmName (assms g)) (cncls g) 
-                        : Subgoal (right' assmName (assms g)) (cncls g) 
+cases assmName (g : gs) = Subgoal (left' (assms g)) (cncls g) 
+                        : Subgoal (right'(assms g)) (cncls g) 
                         : gs
-    where left' assmName []         = error "Invalid rule!"
-          left' assmName (a : as)   = 
+    where left' []          = error "Invalid rule!"
+          left' (a : as)    = 
             if (name a) == assmName
                 then left'' a : as
-                else a : left' assmName as
+                else a : left' as
           left'' assm   = case (formula assm) of
-            Disj f1 f2  -> Assumption assmName f1
-            _           -> error "Invalid rule!"
-          right' assmName []        = error "Invalid rule!"
-          right' assmName (a : as)  =
+            Disj f1 f2      -> Assumption assmName f1
+            _               -> error "Invalid rule!"
+          right' []         = error "Invalid rule!"
+          right' (a : as)   =
             if (name a) == assmName
                 then right'' a : as
-                else a : right' assmName as
-          right'' assm  = case (formula assm) of
-            Disj f1 f2  -> Assumption assmName f2
-            _           -> error "Invalid rule!"
+                else a : right' as
+          right'' assm      = case (formula assm) of
+            Disj f1 f2      -> Assumption assmName f2
+            _               -> error "Invalid rule!"
+
+-- impE
+apply :: String -> Goal -> Goal
+apply assmName []       = error "Nothing to apply apply to!"
+apply assmName (g : gs) = Subgoal (delete assmName (assms g)) (left' (assms g))
+                        : Subgoal (right' (assms g)) (cncls g)
+                        : gs
+    where left' as          =  
+            let f = find assmName as
+             in case (formula f) of
+                Impl f1 f2  -> f1
+                _           -> error "Invalid rule!"
+          right' []         = error "Invalid rule!"
+          right' (a : as)   = 
+            if (name a) == assmName 
+                then (right'' a) : as
+                else a : right' as
+          right'' assm      = case (formula assm) of
+            Impl f1 f2      -> Assumption (name assm) f2
+            _               -> error "Invalid rule!"
+-- eqivE
+eqivE :: String -> Goal -> Goal
+eqivE assmName []       = error "Nothing to apply eqivE to!"
+eqivE assmName (g : gs) = Subgoal (split' (assms g)) (cncls g) : gs
+    where split' []         = error "Invalid rule!"
+          split' (a : as)   = 
+            if (name a) == assmName
+                then (split'' a) ++ as
+                else a : split' as
+          split'' assm      = case (formula assm) of
+            Eqiv f1 f2      -> [ Assumption (name assm ++ "1") (Impl f1 f2)
+                               , Assumption (name assm ++ "2") (Impl f2 f1) ]
+            _               -> error "Invalid rule!"
+
+-- notE
+turn :: String -> Goal -> Goal
+turn assmName []        = error "Nothing to applt turn to!"
+turn assmName (g : gs)  = Subgoal (delete assmName (assms g)) (subneg (assms g)) : gs
+    where subneg as     = 
+            let f = find assmName as 
+             in case (formula f) of
+                Neg f1  -> f1
+                _       -> error "Invalid rule!"
 
