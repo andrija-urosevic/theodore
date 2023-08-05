@@ -25,7 +25,9 @@ source-repository head
 
 library
   exposed-modules:
+      FOL
       Lib
+      NatDed
       NormalForm
       Propositional
   other-modules:

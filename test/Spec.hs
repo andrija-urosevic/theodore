@@ -10,6 +10,7 @@ import qualified Data.Map as Map
 import Propositional as Prop
 import NormalForm as NormalForm
 import FOL as FOL
+import NatDed as NatDed
 
 main :: IO ()
 main = defaultMain tests
@@ -274,6 +275,15 @@ f11 = FOL.Fun "f" [x1, x1]
 f22 = FOL.Fun "f" [x2, x2]
 f33 = FOL.Fun "f" [x3, x3]
 f44 = FOL.Fun "f" [x4, x4]
+
+fConjCommute = FOL.Impl
+        (FOL.Conj (FOL.Rel "A" []) (FOL.Rel "B" []))
+        (FOL.Conj (FOL.Rel "B" []) (FOL.Rel "A" []))
+
+fDisjCommute = FOL.Impl
+        (FOL.Disj (FOL.Rel "A" []) (FOL.Rel "B" []))
+        (FOL.Disj (FOL.Rel "B" []) (FOL.Rel "A" []))
+
 
 tests :: TestTree
 tests = testGroup "All tests"

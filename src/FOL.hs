@@ -55,6 +55,7 @@ instance Show Term where
 instance Show Formula where
     show Top            = "⊤"
     show Bot            = "⊥"
+    show (Rel r [])     = r
     show (Rel r ts)     = r ++ "(" ++ (List.intercalate ", " . map show) ts ++ ")"
     show (Neg f)        = "(¬ " ++ show f ++ ")"
     show (Conj f1 f2)   = "(" ++ show f1 ++ " ∧ " ++ show f2 ++ ")"
