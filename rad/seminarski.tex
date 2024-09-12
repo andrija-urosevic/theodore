@@ -1,0 +1,636 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[utf8]{inputenc}
+%\usepackage[T2A]{fontenc}
+\usepackage[serbian]{babel}
+\usepackage{hyperref}
+\usepackage{fancyvrb}
+\usepackage{newunicodechar}
+
+\usepackage{bussproofs}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{bbold}
+\usepackage{listings}
+
+\newtheorem{theorem}{Teorema}[section]
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definicija}[section]
+
+\usepackage[backend=biber]{biblatex}
+\addbibresource{seminarski.bib}
+
+\newunicodechar{⊢}{\ensuremath{\mathnormal\vdash}}
+\newunicodechar{∧}{\ensuremath{\mathnormal\land}}
+\newunicodechar{→}{\ensuremath{\mathnormal\to}}
+
+\lstset{
+    frame=none,
+    xleftmargin=2pt,
+    stepnumber=0,
+    numbers=left,
+    numbersep=5pt,
+    %numberstyle=\ttfamily\tiny\color[gray]{0.3},
+    belowcaptionskip=\bigskipamount,
+    captionpos=b,
+    escapeinside={*'}{'*},
+    language=haskell,
+    tabsize=2,
+    emphstyle={\bf},
+    commentstyle=\it,
+    stringstyle=\mdseries\rmfamily,
+    showspaces=false,
+    keywordstyle=\bfseries\rmfamily,
+    columns=flexible,
+    basicstyle=\small\sffamily,
+    showstringspaces=false,
+    morecomment=[l]\%,
+}
+
+%opening
+\title{\textsc{Theodore}: Interaktivni dokazivač teorema za logiku prvog reda}
+\author{Andrija Urošević}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+    Interaktivni dokazivači teorema donose preciznost i poverljivost oblastima koji se u velikoj meri oslanjaju na formalnu korektnost. Sa jedne strane, omogućavaju korektnost softvera i hardvera za sisteme čija je tačnost od ključnog značaja. Dok sa druge strane, omogućavaju matematičku strogost pri formulaciji i dokazivanju matematičih teorema. U ovom radu će biti predstavljen interaktivni dokazivač teorema \textsc{Theodore} koji podržava formulaciju i dokazivanje teorema unutar okvira logike prvog reda.
+\end{abstract}
+
+\section{Uvod}
+\label{sec:uvod}
+
+\textsc{Theodore} je interaktivni dokazivač teorema koji podržava formulisanje i dokazivanje teorema unutar okvira logike prvog reda. Implementiran je u funkcionalnom programskom jeziku \textsc{Haskell}. Pokreće se i izvršava u interaktivnom odruženju za \textsc{Haskell}: \textsc{GHCi}. Zbog toga, \textsc{Theodore} se može smatrati kao nadogradnja funkcionalnog programskog jezika \textsc{Haskell}. Još jedna karakteristika, interaktivni dokazivač teorema \textsc{Theodore} je minimalnost, odnosno jedino omogućava dokazivanje teorema primenom pravila prirodne dedukcije.
+
+Formulizacija teoreme, u interaktivnom dokazivaću teorema \textsc{Theodore}, se sastoji u formulisanju liste pretpostavki \textit{Assumptions} (od kojih svaka predstavlja formulu logike prvog reda), kao i zaključka \textit{Conclusion} koji, takođe, predstavlja formulu logike provog reda. Odnosno, iz liste pretpostavki $[\mathcal{H}_1, \mathcal{H}_2, \ldots, \mathcal{H}_n]$ izvodimo zaključak $\mathcal{C}$. To preciznije možemo da zapišemo kao:
+\begin{samepage}
+    \begin{center}
+        \begin{minipage}{\textwidth}
+            \begin{prooftree}[thm\_x]
+                \AxiomC{$\mathcal{H}_1$}
+                \AxiomC{$\mathcal{H}_2$}
+                \AxiomC{$\ldots$}
+                \AxiomC{$\mathcal{H}_n$}
+                \QuaternaryInfC{$\mathcal{C}$}
+            \end{prooftree}
+        \end{minipage}
+    \end{center}
+\end{samepage}
+Shodno tome, teorema thm\_x predstavlja jedno pravilo zaključivanja. Sa druge strane, teorema thm\_x predstavlja pravilo zaključivanja samo onda kada se odgovarajući cilj (koji postavlja teorema thm\_x) dokaže.
+
+Interaktivni dokazivač teorema \textsc{Theodore} pravila prirodne dedukcije predstavlja kao funkcije koje transformišu trenutnu formulaciju teoreme, odnosno transformišu cilj koji treba dokazati. Na primer, cilj se može podeliti u više manjih podciljeva, ili jedan od podciljeva biva izmenjen u skladu sa pravilom prirodne dedukcije. Zbog toga, dokaz teoreme thm\_x predstavlja kompoziciju funkcija gde svaka od funkcija predstavlja jedno pravilo prirodne dedukcije.
+
+\subsection{Drugi interaktivni dokazivači teorema}
+\label{sub:drugi}
+
+Jedan od prvih interaktivni dokazivača teorema je \textsc{Automath}, koji je kreirao de Brujn (1967) \cite{deBruijn1983}. \textsc{Automath} se zasniva na \emph{prosto tipiziranom lambda računu} koga je uveo Čerč \cite{crc40, crc41}. Prosto tipizirani lambda račun je nastao po uzoru na \emph{teoriju tipova} koju je originalno uveo Rasel (1908) \cite{rus08}, pokušavajući da izbegne paradokse pri zasnivanju matematike preko teorije skupova. 
+
+Teorija tipova prati \emph{intuicionistički pristup} koji je nastao po Brauverovoj doktrini \cite{brw07}. Brauver je smatrao da se celokupna matematika, uključujući i sam koncept dokaza, zasniva na konceptu \emph{konstrukcije} (računa/algoritma/programa klasifikovanog tipom). Sa druge strane, bavljenje matematikom predstavlja fundamentalno ljudsku aktivnos, odnosno sposobnost izvršavanja algoritma u svrhu izvođenja mentalne konstrukcije je fundamentalno ljudska. 
+
+Intuicionistički pristup, dalje razvijaju Kolmogorov \cite{kol32}, Hejting \cite{hey66}, Kari i Hauvard \cite{how80}. Pored njih, u velikoj meri je zaslužan Per Martin Luf, koji dalje razvija teoriju tipova u \emph{intuicionističku teoriju tipova} (engl.~\emph{intuitionistic type theory}) ili \emph{zavisnu teoriju tipova} (engl.~\emph{dependent type theory}) \cite{pml98, pml75, pml82, pml93, pml84}. Zavisnu teoriju tipova mnogi interaktivni dokazivači uzimaju kao polaznu tačku koju dalje nadograđuju. 
+
+Neki od poznatih interaktivnih dokazivača teorema uključuju: \textsc{Idris} \cite{bra13}, \textsc{Isabelle-HOL} \cite{isabelle_hol}, \textsc{HOL Light} \cite{harrison09}, \textsc{Lean} \cite{lean}, \textsc{Lean4} \cite{lean4}, \textsc{Coq} \cite{coq}, \textsc{Agda} \cite{norell09, norell07} i \textsc{NuPRL} \cite{nuprl86}. Većina ovih interaktivnih dokazivača teorema kao osnovu ima neku od teorije tipova. Zbog toga, tokom razvoja interaktivnih dokazivača teorema dolazi do potrebe da se teorije tipova klasifikuju. Generalnu klasifikaciju tipskih sistema dao je Berendregt (1991) kroz koncept \emph{lambda kocke} \cite{lambda_cube}.
+
+\subsection{Organizacija rada}
+\label{sub:organizacija}
+
+Ostatak rada je organizovan u 3 poglavlja. Poglavlje~\ref{sec:osnove} uvodi osnovne pojmove logike prvog reda, kao i pravila prirodne dedukcije. Poglavlje~\ref{sec:theodore} opisuje interaktivni dokazivač teorema \textsc{Theodore}, njegovu instalaciju, način korišćenja, kao i detalje implementacije. U poslednjem poglavlju~\ref{sec:zakljucak} izvodi se zaključak.
+
+\section{Osnovi pojmovi}
+\label{sec:osnove}
+
+\textsc{Thedore} interaktivni dokazivač teorema omogućava formulaciju i dokazivanje teorema u okviru logike prvog reda pravilima prirodne dedukcije. Zbog toga u ovom poglavlju uvodimo logiku provog reda, kao i pravila prirodne dedukcije.
+
+\subsection{Logika prvog reda}
+\label{sub:fol}
+
+Simbole logike provog reda čine logički simboli, funkcijski i relacijski simboli. Svakom funkcijsom i relacijskom simbolu dodeljujemo funkciju arnosti koja kazuje koliko argumenata ima odredjena funkcija, odnosno relacija. Funkcijske simboli arnosti $0$ nazivamo konstante, dok relacijske simbole arnosti $0$ nazivamo promenljive. Preciznije, definišemo signaturu $\mathcal{L}$ kao:
+
+\begin{definition}[Signatura]
+    Signaturu $\mathcal{L} = (\Sigma, \Pi, ar)$ čini skup funkcijskih simbola $\Sigma$, skup relacijskih simbola $\Pi$ i funkcija arnosti $ar : \Sigma \cup \Pi \to \mathbb{N}$.
+\end{definition}
+
+Sintaksu iskazne logike definišemo pomoću pojmova term, atomička formula i formula.
+
+\begin{definition}[Term]
+    Skup termova signature $\mathcal{L}$ je najmanji skup koji zadovoljava:
+    \begin{itemize}
+        \item{Promenljva je term.}
+        \item{Ako je $c$ simbol konstante signature $\mathcal{L}$, onda je $c$ term.}
+        \item{Ako su $t_1, \ldots, t_k$ termovi i $f$ funkcijski simobl signature $\mathcal{L}$ arnosti $k$, onda je $f(t_1, \ldots, t_k)$ term.}
+    \end{itemize}
+\end{definition}
+
+\begin{definition}[Atomičke formule]
+    Skup atomičkih formula signature $\mathcal{L}$ je najmanji skup koji zadovoljava:
+    \begin{itemize}
+        \item{Logičke konstante ($\top$ i $\bot$) su atomičke formule.}
+        \item{Iskazno slovo (relacijski simbol arnosti $0$) je atomička formula.}
+        \item{Ako je $p$ relacijski simbol arnosti $k$ signature $\mathcal{L}$ i $t_1, \ldots, t_n$ termovi signature $\mathcal{L}$, onda je $p(t_1, \ldots, t_k)$ atomička formula.}
+    \end{itemize}
+\end{definition}
+
+\begin{definition}[Formule]
+    Skup formula je najmanji skup koji zadovoljava:
+    \begin{itemize}
+        \item{Atomičke formule su formule.}
+        \item{Ako je $A$ formula, onda je $\neg A$ formula.}
+        \item{Ako su $A$ i $B$ formule, onda su i $A \land B$, $A \lor B$, $A \implies B$, $A \iff B$ fromule.}
+        \item{Ako je $A$ formula i $x$ promenljiva, onda su i $\forall x. A$ i $\exists x. A$ formule.}
+    \end{itemize}
+\end{definition}
+
+Za razliku od iskazne logike gde semantiku definišemo pomoću valuacije i interpretacije u valuaciji, semantiku logike prvog reda definišemo preko pojmova $\mathcal{L}$-strukture, valuacije, kao i interpretacije za datu $\mathcal{L}$-strukturu i valuaciju.
+
+\begin{definition}[$\mathcal{L}$-strukture]
+    Neka je dat jezik $\mathcal{L}$. $\mathcal{L}$-strukturu $\mathcal{D}$ čini:
+    \begin{itemize}
+        \item{Neprazan skup objekata $D$.}
+        \item{Za svaki funkcijski simbol $f$ arnosti $k$, njegova interpretacija $f_\mathcal{D} : D^k \to D$.}
+        \item{Za svaki relacijski simbol $p$ arnosti $k$, njegova interpretacija $p_\mathcal{D} \subseteq D^k$}
+    \end{itemize}
+\end{definition}
+
+\begin{definition}[Valuacija]
+    Za datu signaturu $\mathcal{L}$, $\mathcal{L}$-strukturu $\mathcal{D}$ sa domenom $D$ i skup promenljivih $V$. Valuacija nad $V$ je funkcija $v : V \to D$.
+\end{definition}
+
+\begin{definition}[Vrednost terma]
+    Neka je dat jezik $\mathcal{L}$, $\mathcal{L}$-struktura $\mathcal{D}$ i valuacija $v$. Tada vrednost terma $t$ obeležavamo kao $\mathcal{D}_v (t)$ i definišemo kao:
+    \begin{itemize}
+        \item{Ako je term $t$ promenljiva $x$, onda je $\mathcal{D}_v(x) = v(x)$.}
+        \item{Ako je term $t$ konstantni simbol $c$, onda je $\mathcal{D}_v(c) = c_\mathcal{D}$.}
+        \item{Ako je term $t$ funkcijski simbol arnosti $k$, odnosno $t$ je oblika $f(t_1, \ldots, t_k)$, onda je $\mathcal{D}_v(f(t_1, \ldots, t_k)) = f_\mathcal{D}(\mathcal{D}_v(t_1), \ldots, \mathcal{D}_v(t_k))$.}
+    \end{itemize}
+\end{definition}
+
+\begin{definition}[Vrednost formule]
+    Neka je dat jezik $\mathcal{L}$, $\mathcal{L}$-struktura $\mathcal{D}$ i valuacija $v$. Tada vrednost formule $F$ obeležavamo kao $\mathcal{D}_v (F)$ i definišemo kao:
+    \begin{itemize}
+        \item{Ako je formula $F$ konstanta $\top$, tada $\mathcal{D}_v(\top) = 1$.}
+        \item{Ako je formula $F$ konstanta $\bot$, tada $\mathcal{D}_v(\top) = 0$.}
+        \item{Ako je formula $F$ atomička formula $p(t_1, \ldots, t_k)$, tada je $\mathcal{D}_v(p(t_1, \ldots, v_k)) = 1$ akko $(\mathcal{D}_v(t_1), \ldots, \mathcal{D}_v(t_k)) \in p_\mathcal{D}$, gde su $\mathcal{D}_v(t_1), \ldots, \mathcal{D}_v(t_k)$ vrednosti termova $t_1, \ldots, t_k$.}
+        \item{Ako je formula $F$ oblika $\neg F'$, onda je $\mathcal{D}_v(\neg F') = 1$ akko $\mathcal{D}_v(F') = 0$.}
+        \item{Ako je formula $F$ oblika $F_1 \land F_2$, onda je $\mathcal{D}_v(F_1 \land F_2) = 1$ akko $\mathcal{D}_v(F_1) = 1$ i $\mathcal{D}_v(F_2) = 1$.}
+        \item{Ako je formula $F$ oblika $F_1 \lor F_2$, onda je $\mathcal{D}_v(F_1 \lor F_2) = 1$ akko $\mathcal{D}_v(F_1) = 1$ ili $\mathcal{D}_v(F_2) = 1$.}
+        \item{Ako je formula $F$ oblika $F_1 \implies F_2$, onda je $\mathcal{D}_v(F_1 \implies F_2) = 1$ akko $\mathcal{D}_v(F_1) = 0$ ili $\mathcal{D}_v(F_2) = 1$.}
+        \item{Ako je formula $F$ oblika $F_1 \iff F_2$, onda je $\mathcal{D}_v(F_1 \iff F_2) = 1$ akko $\mathcal{D}_v(F_1) = \mathcal{D}_v(F_2)$.}
+        \item{Ako je formula $F$ oblika $\exists x. F$, onda je $\mathcal{D}_v(\exists x. F) = 1$ akko postoji valuacija $v'$ dobijena od $v$ samo izmenom vrednosti promenljive $x$ tako da $\mathcal{D}_{v'}(F) = 1$.}
+        \item{Ako je formula $F$ oblika $\forall x. F$, onda je $\mathcal{D}_v(\forall x. F) = 1$ akko za svaku valuaciju $v'$ dobijenu od $v$ samo izmenom vrednosti promenljive $x$ tako da $\mathcal{D}_{v'}(F) = 1$.}
+    \end{itemize}
+\end{definition}
+
+\subsection{Pravila prirodne dedukcije}
+\label{sub:natded}
+
+Intuicionistička pravila prirodne dedukcije predstavljaju kolekciju pravila zaključivanja, koja možemo podeliti u dve grupe: pravila uvođenja i pravila eliminisanja. Sa druge strane, možemo ih podeliti u grupe po logičkim veznicima. Prvi put formalnu sintaksu uvode Gencen i Jaskovski (1934) \cite{gentzen35, jaskowski34}.
+
+Pravila uvodjenja i elimenacije konjunkcije:
+\begin{center}
+    \begin{minipage}{\textwidth}
+        \begin{prooftree}[$\land_I$]
+            \AxiomC{$\Gamma \vdash A$}
+            \AxiomC{$\Gamma \vdash B$}
+            \BinaryInfC{$\Gamma \vdash A \land B$}
+        \end{prooftree}
+    \end{minipage}
+    \begin{minipage}{0.3\textwidth}
+        \begin{prooftree}[$\land_{E1}$]
+            \AxiomC{$\Gamma \vdash A \land B$}
+            \UnaryInfC{$\Gamma \vdash A$}
+        \end{prooftree}
+    \end{minipage}
+    \begin{minipage}{0.3\textwidth}
+        \begin{prooftree}[$\land_{E2}$]
+            \AxiomC{$\Gamma \vdash A \land B$}
+            \UnaryInfC{$\Gamma \vdash B$}
+        \end{prooftree}
+    \end{minipage}
+\end{center}
+
+Pravila uvodjenja i eleminacije disjunkcije:
+
+\begin{center}
+    \begin{minipage}{0.3\textwidth}
+        \begin{prooftree}[$\lor_{I1}$]
+            \AxiomC{$\Gamma \vdash A$}
+            \UnaryInfC{$\Gamma \vdash A \lor B$}
+        \end{prooftree}
+    \end{minipage}
+    \begin{minipage}{0.3\textwidth}
+        \begin{prooftree}[$\lor_{I1}$]
+            \AxiomC{$\Gamma \vdash B$}
+            \UnaryInfC{$\Gamma \vdash A \lor B$}
+        \end{prooftree}
+    \end{minipage}
+    \begin{minipage}{\textwidth}
+        \begin{prooftree}[$\lor_{E}$]
+            \AxiomC{$\Gamma \vdash A \lor B$}
+            \AxiomC{$\Gamma$, $A \vdash X$}
+            \AxiomC{$\Gamma$, $B \vdash X$}
+            \TrinaryInfC{$\Gamma \vdash X$}
+        \end{prooftree}
+    \end{minipage}
+\end{center}
+
+\newpage%
+Pravila uvodjenja i eliminacije implikacije:
+
+\begin{center}
+    \begin{minipage}{0.4\textwidth}
+        \begin{prooftree}[$\implies_{I}$]
+            \AxiomC{$\Gamma$, $A \vdash B$}
+            \UnaryInfC{$\Gamma \vdash A \implies B$}
+        \end{prooftree}
+    \end{minipage}
+    \begin{minipage}{0.5\textwidth}
+        \begin{prooftree}[$\implies_{E}$]
+            \AxiomC{$\Gamma \vdash A$}
+            \AxiomC{$\Gamma \vdash A \implies B$}
+            \BinaryInfC{$\Gamma \vdash B$}
+        \end{prooftree}
+    \end{minipage}
+\end{center}
+
+Pravila uvodjenja i eliminacije negacije:
+
+\begin{center}
+    \begin{minipage}{0.4\textwidth}
+        \begin{prooftree}[$\neg_{I}$]
+            \AxiomC{$\Gamma$, $A \vdash \bot$}
+            \UnaryInfC{$\Gamma \vdash \neg A$}
+        \end{prooftree}
+    \end{minipage}
+    \begin{minipage}{0.5\textwidth}
+        \begin{prooftree}[$\neg_{E}$]
+            \AxiomC{$\Gamma \vdash A$}
+            \AxiomC{$\Gamma \vdash \neg A$}
+            \BinaryInfC{$\Gamma \vdash \bot$}
+        \end{prooftree}
+    \end{minipage}
+\end{center}
+
+Pravila uvodjenja i eliminacije logičkih konstanti:
+
+\begin{center}
+    \begin{minipage}{0.4\textwidth}
+        \begin{prooftree}[$\top_{I}$]
+            \AxiomC{$\Gamma$}
+            \UnaryInfC{$\Gamma \vdash \top$}
+        \end{prooftree}
+    \end{minipage}
+    \begin{minipage}{0.5\textwidth}
+        \begin{prooftree}[$\bot_{E}$]
+            \AxiomC{$\Gamma \vdash \bot$}
+            \UnaryInfC{$\Gamma \vdash A$}
+        \end{prooftree}
+    \end{minipage}
+\end{center}
+
+Pravila uvodjenja i eliminacije univerzalnog kvantifikatora:
+
+\begin{center}
+    \begin{minipage}{0.4\textwidth}
+        \begin{prooftree}[$\forall_{I}$]
+            \AxiomC{$\Gamma \vdash A[x \rightarrow y]$}
+            \UnaryInfC{$\Gamma \vdash \forall x. A$}
+        \end{prooftree}
+    \end{minipage}
+    \begin{minipage}{0.5\textwidth}
+        \begin{prooftree}[$\forall_{E}$]
+            \AxiomC{$\Gamma \vdash \forall x. A$}
+            \UnaryInfC{$\Gamma \vdash A[x \rightarrow t]$}
+        \end{prooftree}
+    \end{minipage}
+\end{center}
+
+Pravila uvodjenja i eliminacije egzistencijalnog kvantifikatora:
+
+\begin{center}
+    \begin{minipage}{0.4\textwidth}
+        \begin{prooftree}[$\exists_{I}$]
+            \AxiomC{$\Gamma \vdash A[x \rightarrow t]$}
+            \UnaryInfC{$\Gamma \vdash \exists x. A$}
+        \end{prooftree}
+    \end{minipage}
+    \begin{minipage}{0.5\textwidth}
+        \begin{prooftree}[$\exists_{E}$]
+            \AxiomC{$\Gamma \vdash \exists x. A$}
+            \AxiomC{$\Gamma$, $A[x \rightarrow y] \vdash B$}
+            \BinaryInfC{$\Gamma \vdash B$}
+        \end{prooftree}
+    \end{minipage}
+\end{center}
+
+Pored intuicionističkih pravila postoje i tri klasična pravila:
+
+\begin{center}
+    \begin{minipage}{\textwidth}
+        \begin{prooftree}[LEM]
+            \AxiomC{}
+            \UnaryInfC{$\Gamma \vdash A \lor \neg A$}
+        \end{prooftree}
+    \end{minipage}
+    \begin{minipage}{\textwidth}
+        \begin{prooftree}[double neg]
+            \AxiomC{$\Gamma \vdash \neg \neg A$}
+            \UnaryInfC{$\Gamma \vdash A$}
+        \end{prooftree}
+    \end{minipage}
+    \begin{minipage}{\textwidth}
+        \begin{prooftree}[contr]
+            \AxiomC{$\Gamma$, $\neg A \vdash \bot$}
+            \UnaryInfC{$\Gamma \vdash A$}
+        \end{prooftree}
+    \end{minipage}
+\end{center}
+
+\section{Theodore}
+\label{sec:theodore}
+
+Interaktivni dokazivač teorema \textsc{Theodore} je javno dostupan i može se preuzeti na sledećoj adressi: \texttt{https://github.com/andrija-urosevic/theodore}. Za pokretanje interaktivno dokazivača teorema \textsc{Theodore} potrebno je instalirati kompajler za funkcionalni programski jezik \textsc{Haskell} (\textsc{GHC} --- Glasgow Haskell Compiler), kao i njegovo interaktivno okruženje \textsc{GHCi}. Nakon instaliranja kompajlera \textsc{GHC} i interaktivnog okruženja \textsc{GHCi}, \textsc{Theodore} se pokreće tako što se u interaktivnom orkuženju \textsc{GHCi} učita fajl \texttt{NatDed.hs}, koji se nalazi u direktorijumu \texttt{src}.
+
+\subsection{Logika prvog reda unutar \textsc{Theodore}}
+\label{sub:theodore_fol}
+
+Tip svih termova možemo definisati kao tip svih promenljivih koje su okarakterisane imenom, kao i tip svih funkcija koje su okarakterisane imenom i listom termova. Konstante su funkcije arnosti $0$, odnostno funkcije okarakterisane imenom i praznom listom. To u \textsc{Haskell}-u zapisujemo kao:
+\begin{lstlisting}
+data Term
+    = Var String
+    | Fun String [Term]
+    deriving (Eq, Ord)
+
+mkConstTerm :: String -> Term
+mkConstTerm c = Fun c []
+\end{lstlisting}
+Na primer, term $(p+0)+(p*q)$ možemo definisati kao:
+\begin{lstlisting}
+bitArithTerm :: Term
+bitArithTerm =
+    Fun "+"
+    [ Fun "+" [ Var "p", mkConstTerm "0" ]
+    , Fun "*" [ Var "p" , Var "q" ] ]
+\end{lstlisting}
+
+Atomičke formule logike provog reda možemo definisati kao:
+\begin{lstlisting}
+    Rel String [Term]
+\end{lstlisting}
+Jasno je da su logičke promenljive relacije arnosti $0$, odnosno relacije okarakterisane imenom i praznom listom. Zbog toga, tip svih formula logike provog reda definišemo kao:
+\begin{lstlisting}
+data Formula
+     = Top
+     | Bot
+     | Rel String [Term]
+     | Neg Formula
+     | Conj Formula Formula
+     | Disj Formula Formula
+     | Impl Formula Formula
+     | Eqiv Formula Formula
+     | Alls String Formula
+     | Exis String Formula
+     deriving (Eq, Ord)
+
+mkVar :: String -> Fromula
+mkVar p = Rel p []
+\end{lstlisting}
+Na primer, formulu $\forall x. \mathsf{even}(x) \land \mathsf{lt}(x, 3) \implies \mathsf{eq}(x, 0)$ možemo zapisati kao:
+\begin{lstlisting}
+babyFormula :: Formula
+babyFormula =
+    Alls "x" (Impl
+        (Conj
+            (Rel "even" [Var "x"])
+            (Rel "lt" [Var "x", mkConstTerm "three"])
+        )
+        (Rel "eq" [Var "x", mkConstTerm "zero"])
+    )
+\end{lstlisting}
+
+Da bi definisali $\mathcal{L}$-strukturu, potrebno je prvo uvesti sledeće tipske sinonime:
+\begin{lstlisting}
+type Assigment a    = Map.Map String a
+type FnInterp a     = Assigment ([a] -> a)
+type RelInterp a    = Assigment ([a] -> Bool)
+\end{lstlisting}
+Dodela $\mathsf{Assigment a}$ predstavlja mapu koja ključ tipa $\mathsf{String}$ slika u element tipa $\mathsf{a}$. Dalje, funkcijskim simbolima dodeljujemo funkciju $\mathsf{[a]}$ -$>$ $\mathsf{a}$, a relacijskim simbolima dodeljujemo funkciju $\mathsf{[a]}$ -$> \mathsf{Bool}$.
+
+Podesetimo se da $\mathcal{L}$-strukturu čini domen $D$, interpretaciju funkcijskih simbola $f_\mathcal{D} : D^k \to D$, i interpretaciju relacijskih simbola $p_\mathcal{D} \subseteq D^k$. Tip $\mathcal{L}$-strukture ćemo nazivati $\mathsf{Model}$, a domen $D$ univerzum, koga karakteriše lista elemenata. U \textsc{Heskell}-u to zapisujemo kao:
+\begin{lstlisting}
+data Model a =
+    Model { univ :: [a]
+          , fn :: FnInterp a
+          , rel :: RelInterp a }
+\end{lstlisting}
+Primer $\mathcal{L}$-strukture aritmetike možemo definisati tako što za domen/univerzum uzmemo listu cifara od $[0, \ldots, 9]$. Konstante $0, \ldots, 9$ interpretiraćemo na uobičajeni način. Funkcije sabiranja i množenja, takođe, interpretiramo na uobičajeni način, ali po modulu $10$ kako bi ispoštovali domen. Relacijske simbole jednako ($\mathsf{eq}$), manje ($\mathsf{lt}$), i neparno ($\mathsf{even}$), takođe, interpretiramo na uobičajeni način. To u \textsc{Haskell}-u zapisujemo kao:
+\begin{lstlisting}
+babyArithModel :: Model Int                                                     
+babyArithModel = Model                                                          
+    [0..9]                                                                      
+    ( Map.fromList                                                              
+    [ ("+",     \args -> args !! 0 + args !! 1 `mod` 10)                        
+    , ("*",     \args -> args !! 0 * args !! 1 `mod` 10)                        
+    , ("zero",  \_ -> 0)                                                        
+    , ("one",   \_ -> 1)                                                        
+    , ("two",   \_ -> 2)                                                        
+    , ("three", \_ -> 3)                                                        
+    , ("four",  \_ -> 4)                                                        
+    , ("five",  \_ -> 5)                                                        
+    , ("six",   \_ -> 6)                                                        
+    , ("seven", \_ -> 7)                                                        
+    , ("eight", \_ -> 8)                                                        
+    , ("nine",  \_ -> 9) ]
+    )                                                                          
+    ( Map.fromList                                                              
+    [ ("eq",    \args -> args !! 0 == args !! 1)                                
+    , ("lt",    \args -> args !! 0 < args !! 1)                                 
+    , ("even",  \args -> even (args !! 0)) ] 
+    )            
+\end{lstlisting}
+Primer jedne valuacije promenljivih, u kojoj promenljivoj $x$ dodeljujemo vrednost $5$, u \textsc{Haskell}-u zapisujemo kao:
+\begin{lstlisting}
+babyAssigment :: Assigment Int
+babyAssigment = Map.fromList [ ("x", 5) ]
+\end{lstlisting}
+Trivijalna valuacija ni jednoj promenljivoj ne dodeljuje vrednosti iz domena:
+\begin{lstlisting}
+trivAssigment :: Assigment Int
+trivAssigment = Map.fromList []
+\end{lstlisting}
+
+Vrednost terma za datu interpretaciju funkcija i valuaciju u \textsc{Haskell}-u definišemo kao:
+\begin{lstlisting}
+evalTerm :: FnInterp a -> Assigment a -> Term -> a
+evalTerm _  sigma (Var p)       = sigma Map.! p
+evalTerm fn sigma (Fun f ts)    = fn Map.! f
+                                $ map (evalTerm fn sigma)
+                                $ ts
+\end{lstlisting}
+
+Vrednost formule za dati $\mathcal{L}$-strukturu i valuaciju u \textsc{Haskell}-u definišemo kao:
+\begin{lstlisting}
+evalFormula :: Model a -> Assigment a -> Formula -> Bool
+evalFormula _     _     Top             = True
+evalFormula _     _     Bot             = False
+evalFormula model sigma (Rel r ts)      = (rel model) Map.! r
+                                        $ map (evalTerm (fn model) sigma) 
+                                        $ ts
+evalFormula model sigma (Neg f)         = not (evalFormula model sigma f)
+evalFormula model sigma (Conj f1 f2)    = (evalFormula model sigma f1) 
+                                       && (evalFormula model sigma f2)
+evalFormula model sigma (Disj f1 f2)    = (evalFormula model sigma f1) 
+                                       || (evalFormula model sigma f2)
+evalFormula model sigma (Impl f1 f2)    = not (evalFormula model sigma f1) 
+                                       || (evalFormula model sigma f2)
+evalFormula model sigma (Eqiv f1 f2)    = (not (evalFormula model sigma f1) 
+                                       || (evalFormula model sigma f2))
+                                       && ((evalFormula model sigma f1) 
+                                       || not (evalFormula model sigma f2))
+evalFormula model sigma (Alls x f)      = all (\val -> 
+                                                evalFormula 
+                                                    model 
+                                                    (Map.insert x val sigma) 
+                                                    f
+                                              )
+                                        $ univ model
+evalFormula model sigma (Exis x f)      = any (\val -> 
+                                                evalFormula 
+                                                    model 
+                                                    (Map.insert x val sigma) 
+                                                    f
+                                              )
+                                        $ univ model
+
+\end{lstlisting}
+Sledeća izraz treba da se evaluira u $\mathsf{False}$.
+\begin{lstlisting}
+evalFormula babyArithModel trivAssigment babyFormula
+\end{lstlisting}
+Ukoliko uzmemo za $x$ vrednost $1$, u datoj $\mathcal{L}$-strukturi, važi da je $\mathsf{even}(x)$ kao i da $\mathsf{lt}(x, 3)$, ali ne važi $\mathsf{eq}(x, 0)$. Zbog toga, se prethodni izraz evaluira u $\mathsf{False}$.
+
+\subsection{Prirodna dedukcija unutar \textsc{Theodore}}
+\label{sub:theodore_natded}
+
+Da bi definisali pravila prirodne dedukcije, potrebno je definisati pojam teoreme/cilja. Pravila prirodne dedukcije će se primenjivati na cilj i tako će ga transformisati. Već je napomenuto u poglavlju~\ref{sec:uvod} da je cilj predstavljen kao lista pretpostavki, zajedno sa zaključkom. Pored toga, zaključak kao i svaka od pojedinačnih pretpostavki predstavlja formulu logike prvog reda. Često imamo potrebu da se referišemo na određenu pretpostavku iz liste pretpostavki. Zbog toga, pretpostavku karakterišemo imenom pretpostavke kao i odgovarajućom formulom logike prvog reda. To je unutar \textsc{Theodore}-a definisano kao:
+\begin{lstlisting}
+data Assumption = Assumption { name :: String
+                             , formula :: Formula }
+
+type Assumptions = [Assumption]
+\end{lstlisting}
+
+Sa druge strane cilj, se može razbiti na više podciljeva. Zbog toga, cilj definišemo kao listu podciljeva, gde svaki podcilj karakteriše lista pretpostavki i zaključak. To je unutar \textsc{Theodore}-a definisano kao:
+\begin{lstlisting}
+data Subgoal = Subgoal { assms :: Assumptions
+                       , cncls :: Formula }
+
+type Goal = [Subgoal]
+\end{lstlisting}
+
+Pretpostavimo da želimo da pokažemo teoremu $A \land B \implies B \land A$. Prvo definišemo odgovarajuću formulu:
+\begin{lstlisting}
+fConjCommute = Impl
+        (Conj (mkVar "A") (mkVar "B"))
+        (Conj (mkVar "B") (mkVar "A"))
+\end{lstlisting}
+Dalje, definišemo odgovarajući cilj koji želimo da pokažemo:
+\begin{lstlisting}
+thmConjCommute = [ Subgoal [] fConjCommute ]
+\end{lstlisting}
+Cilj $\mathsf{thmConjCommute}$ ima praznu listu pretpostavki, a za zaključak ima formulu $\mathsf{fConjCommute}$. Kada ispišemo cilj $\mathsf{thmConjCommute}$ dobijamo:
+\begin{verbatim}
+Goal (1 subgoals):
+
+1. subgoal
+⊢ ((A ∧ B) → (B ∧ C))
+\end{verbatim}
+
+Odgovarajući dokaz započinjemo uvođenjem implikacije. Uvođenje implikacije unutar \textsc{Theodore}-a je definisano kao:
+\begin{lstlisting}
+intro :: String -> Goal -> Goal
+intro assmName []       = error "Nothing to apply intro to!"
+intro assmName (g : gs) = case (cncls g) of
+    Impl f1 f2  -> Subgoal [Assumption assmName f1] f2 : gs
+    _           -> error "Invalid rule!"
+\end{lstlisting}
+Kompletna lista pravila prirodne dedukcije kao i odgovarajućih funkcija se nalazi u tabeli~\ref{tab:natded}.
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{c | c}
+        Prirodna dedukcija & \textsc{Theodore} funkcija \\
+        \hline
+        exact & $\mathsf{exact :: String}$ $-> \mathsf{Goal}$ $-> \mathsf{Goal}$ \\
+        $\implies_I$ & $\mathsf{intro :: String}$ $-> \mathsf{Goal}$ $-> \mathsf{Goal}$ \\
+        $\land_I$ & $\mathsf{tear :: Goal}$ $-> \mathsf{Goal}$ \\
+        $\lor_{I1}$ & $\mathsf{left :: Goal}$ $-> \mathsf{Goal}$ \\
+        $\lor_{I2}$ & $\mathsf{right :: Goal}$ $-> \mathsf{Goal}$ \\
+        $\iff_I$ & $\mathsf{iff :: String}$ $-> \mathsf{Goal}$ $-> \mathsf{Goal}$ \\
+        $\neg_I$ & $\mathsf{false :: String}$ $-> \mathsf{Goal}$ $-> \mathsf{Goal}$ \\
+        $\land_E$ & $\mathsf{split :: String}$ $-> \mathsf{Goal}$ $-> \mathsf{Goal}$ \\
+        $\lor_E$ & $\mathsf{cases :: String}$ $-> \mathsf{Goal}$ $-> \mathsf{Goal}$ \\
+        $\implies_E$ & $\mathsf{apply :: String}$ $-> \mathsf{Goal}$ $-> \mathsf{Goal}$ \\
+        $\iff_E$ & $\mathsf{equiv :: String}$ $-> \mathsf{Goal}$ $-> \mathsf{Goal}$ \\
+        $\neg_E$ & $\mathsf{turn :: String}$ $-> \mathsf{Goal}$ $-> \mathsf{Goal}$ \\
+        $\forall_E$ & nedostaje \\
+        $\forall_I$ & nedostaje \\
+        $\exists_E$ & nedostaje \\
+        $\exists_I$ & nedostaje \\
+    \end{tabular}
+    \caption{Prabila prirodne dedukcije i njihove odgovarajuće funkcije unutar interaktivnog dokazivača \textsc{Theodore}.}
+    \label{tab:natded}
+\end{table}
+
+Kada primenimo $\mathsf{intro}$ $"\mathsf{h}"$ nad ciljem $\mathsf{thmConjCommute}$, dobijamo:
+\begin{verbatim}
+Goal (1 subgoals):
+
+1. subgoal
+• (A ∧ B) (h)
+⊢ (B ∧ C)
+\end{verbatim}
+
+Dalje, možemo da primenimo eliminaciju konjunkcije, odnosno funkciju $\mathsf{split}$ $"\mathsf{h}"$ nad prehodno dobijenim ciljem. Dobijamo:
+\begin{verbatim}
+Goal (1 subgoals):
+
+1. subgoal
+• A (h1)
+• B (h2)
+⊢ (B ∧ A)
+\end{verbatim}
+Nakon toga možemo primeniti uvođenje konjunkcije, odnosno funkciju $\mathsf{tear}$ nad prethodno dobijenim ciljem. Tada dobijamo 2 podcilja:
+\begin{verbatim}
+Goal (2 subgoals):
+
+1. subgoal
+• A (h1)
+• B (h2)
+⊢ B
+
+2. subgoal
+• A (h1)
+• B (h2)
+⊢ A
+\end{verbatim}
+Prvi podcilj ne treba dalje dokazivati pa ga zatvaramo funkcijom $\mathsf{exact}$ $"\mathsf{h2}"$. Slično, drugi podcilj ne treba dalje dokazivati pa ga zatvaramo funkcijom $\mathsf{exact}$ $"\mathsf{h1}"$. Na kraju, dobijamo sledeću poruku koja nam kaže da smo završili dokaz:
+\begin{verbatim}
+Nothing to prove!
+\end{verbatim}
+
+Celokupan dokaz možemo predstaviti i sačuvati kao kompoziciju funkcija, odnosno:
+\begin{lstlisting}
+proofConjCommute = exact "h1" . exact "h2" . tear . split "h" . intro "h"
+\end{lstlisting}
+
+\section{Zaklju\v cak}
+\label{sec:zakljucak}
+
+Interaktivni dokazivač teorema \textsc{Theodore} omogućava dokazivanje teorema logike prvog reda, intuicionističkim pravilima prirodne dedukcije. 
+
+\nocite{*}
+\printbibliography
+
+\end{document}

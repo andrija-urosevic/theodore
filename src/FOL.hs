@@ -8,6 +8,7 @@ module FOL
     , RelInterp
     , Model ( Model )
     , mkConstTerm
+    , mkVar
     , substTerm
     , evalTerm
     , evalFormula
@@ -67,6 +68,9 @@ instance Show Formula where
 
 mkConstTerm :: String -> Term
 mkConstTerm c = Fun c []
+
+mkVar :: String -> Formula
+mkVar p = Rel p []
 
 substTerm :: Assigment Term -> Term -> Term
 substTerm sigma (Var p)     = Map.findWithDefault (Var p) p sigma

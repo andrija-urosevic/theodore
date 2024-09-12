@@ -8,12 +8,12 @@ module NatDed
     , tear
     , left
     , right
-    , eqivI
+    , iff
     , false
     , split
     , cases
     , apply
-    , eqivE
+    , equiv
     , turn
     ) where
 
@@ -101,15 +101,15 @@ right (g : gs)  = case (cncls g) of
     _           -> error "Invalid rule!"
 
 -- Apply eqivI
-eqivI :: String -> Goal -> Goal
-eqivI assmName []       = error "Nothing to apply eqiv to!"
-eqivI assmName (g : gs) = case (cncls g) of
+iff :: String -> Goal -> Goal
+iff assmName []       = error "Nothing to apply iff to!"
+iff assmName (g : gs) = case (cncls g) of
     Eqiv f1 f2  -> Subgoal (Assumption assmName f1 : assms g) f2 
                  : Subgoal (Assumption assmName f2 : assms g) f1 
                  : gs
     _           -> error "Invalid rule!"
 
--- Apply negIB
+-- Apply negI
 false :: String -> Goal -> Goal
 false assmName []       = error "Nothing to apply false to!"
 false assmName (g : gs) = case (cncls g) of
@@ -173,9 +173,9 @@ apply assmName (g : gs) = Subgoal (delete assmName (assms g)) (left' (assms g))
             Impl f1 f2      -> Assumption (name assm) f2
             _               -> error "Invalid rule!"
 -- eqivE
-eqivE :: String -> Goal -> Goal
-eqivE assmName []       = error "Nothing to apply eqivE to!"
-eqivE assmName (g : gs) = Subgoal (split' (assms g)) (cncls g) : gs
+equiv :: String -> Goal -> Goal
+equiv assmName []       = error "Nothing to apply equiv to!"
+equiv assmName (g : gs) = Subgoal (split' (assms g)) (cncls g) : gs
     where split' []         = error "Invalid rule!"
           split' (a : as)   = 
             if (name a) == assmName
