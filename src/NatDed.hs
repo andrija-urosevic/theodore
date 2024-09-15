@@ -3,6 +3,7 @@ module NatDed
     , Assumptions
     , Subgoal ( Subgoal )
     , Goal
+    , mkGoal
     , exact
     , intro
     , tear
@@ -10,11 +11,13 @@ module NatDed
     , right
     , iff
     , false
+    , free
     , split
     , cases
     , apply
     , equiv
     , turn
+    , fix
     ) where
 
 import FOL
@@ -24,8 +27,11 @@ data Assumption = Assumption { name :: String
 
 type Assumptions = [Assumption]
 
-data Subgoal = Subgoal { assms :: Assumptions 
-                       , cncls :: Formula } -- TODO: meta vars 
+type MetaVars = [String]
+
+data Subgoal = Subgoal { mvars :: MetaVars
+                       , assms :: Assumptions 
+                       , cncls :: Formula }
 
 type Goal = [Subgoal]
 
@@ -36,9 +42,12 @@ instance {-# OVERLAPS #-} Show Assumptions where
     show [] = ""
     show (a : as) = "\ESC[34m• \ESC[0m" ++ show a ++ "\n" ++ show as
 
+instance {-# OVERLAPS #-} Show MetaVars where
+    show [] = ""
+    show (v : vs) = "\ESC[30m- \ESC[0m" ++ v ++ "\n" ++ show vs
+
 instance {-# OVERLAPS #-} Show Subgoal where
-    show subgoal = show (assms subgoal) ++ "\ESC[34m⊢\ESC[0m " ++ show (cncls subgoal)
-    -- TODO: show meta vars
+    show subgoal = show (mvars subgoal) ++  show (assms subgoal) ++ "\ESC[34m⊢\ESC[0m " ++ show (cncls subgoal)
 
 instance {-# OVERLAPS #-} Show Goal where
     show [] = "Nothing to prove!"
@@ -66,6 +75,9 @@ delete assmName []      = error $ assmName ++ " not in assumptions!"
 delete assmName (a : as)= 
     if (name a) == assmName then as else a : delete assmName as
 
+mkGoal :: Assumptions -> Formula -> Goal
+mkGoal assms cncls = [ Subgoal [] assms cncls ]
+
 -- Apply assumption
 exact :: String -> Goal -> Goal
 exact assmName []       = error "Nothing to apply exact to!"
@@ -76,36 +88,38 @@ exact assmName (g : gs) =
 intro :: String -> Goal -> Goal
 intro assmName []       = error "Nothing to apply intro to!"
 intro assmName (g : gs) = case (cncls g) of
-    Impl f1 f2  -> Subgoal [Assumption assmName f1] f2 : gs
+    Impl f1 f2  -> Subgoal (mvars g) [Assumption assmName f1] f2 : gs
     _           -> error "Invalid rule!"
 
 -- Apply conjI
 tear :: Goal -> Goal
 tear []         = error "Nothing to apply exact to!"
 tear (g : gs)   = case (cncls g) of
-    Conj f1 f2  -> Subgoal (assms g) f1 : Subgoal (assms g) f2 : gs
+    Conj f1 f2  -> Subgoal (mvars g) (assms g) f1 
+                 : Subgoal (mvars g) (assms g) f2 
+                 : gs
     _           -> error "Invalid rule!"
 
 -- Apply disjI left
 left :: Goal -> Goal
 left []         = error "Nothing to apply exact to!"
 left (g : gs)   = case (cncls g) of
-    Disj f1 f2  -> Subgoal (assms g) f1 : gs
+    Disj f1 f2  -> Subgoal (mvars g) (assms g) f1 : gs
     _           -> error "Invalid rule!"
 
 -- Apply disjI right
 right :: Goal -> Goal
 right []        = error "Nothing to apply exact to!"
 right (g : gs)  = case (cncls g) of
-    Disj f1 f2  -> Subgoal (assms g) f2 : gs
+    Disj f1 f2  -> Subgoal (mvars g) (assms g) f2 : gs
     _           -> error "Invalid rule!"
 
 -- Apply eqivI
 iff :: String -> Goal -> Goal
 iff assmName []       = error "Nothing to apply iff to!"
 iff assmName (g : gs) = case (cncls g) of
-    Eqiv f1 f2  -> Subgoal (Assumption assmName f1 : assms g) f2 
-                 : Subgoal (Assumption assmName f2 : assms g) f1 
+    Eqiv f1 f2  -> Subgoal (mvars g) (Assumption assmName f1 : assms g) f2 
+                 : Subgoal (mvars g) (Assumption assmName f2 : assms g) f1 
                  : gs
     _           -> error "Invalid rule!"
 
@@ -113,13 +127,41 @@ iff assmName (g : gs) = case (cncls g) of
 false :: String -> Goal -> Goal
 false assmName []       = error "Nothing to apply false to!"
 false assmName (g : gs) = case (cncls g) of
-    Neg f       -> Subgoal (Assumption assmName f  : assms g) Bot : gs
+    Neg f       -> Subgoal (mvars g) (Assumption assmName f  : assms g) Bot 
+                 : gs
     _           -> error "Invalid rule!"
+
+-- Apply allI
+free :: String -> Goal -> Goal
+free mvar [] = error "Nothing to apply free to!"
+free mvar (g : gs) = case (cncls g) of
+    Alls x f    -> if (notElem mvar (mvars g)) 
+                   then Subgoal 
+                            (mvar : mvars g) 
+                            (assms g) 
+                            (substVar x mvar f) 
+                      : gs
+                   else error "Invalid rule!"
+    _           -> error "Invalid rule!"
+
+-- Apply exI
+set :: String -> Goal -> Goal
+set mvar [] = error "Nothing to apply set to!"
+set mvar (g : gs) = case (cncls g) of
+    Exis x f    -> if (elem mvar (mvars g))
+                   then Subgoal
+                            (mvars g)
+                            (assms g)
+                            (substVar x mvar f)
+                      : gs
+                   else error "Invalid rule!"
+    _           -> error "Invalid rule!"
+
 
 -- Apply conjE
 split :: String -> Goal -> Goal
 split assmName []       = error "Nothing to apply split to!"
-split assmName (g : gs) = Subgoal (split' (assms g)) (cncls g) : gs
+split assmName (g : gs) = Subgoal (mvars g) (split' (assms g)) (cncls g) : gs
     where split' []         = error "Invalid rule!"
           split' (a : as)   = 
             if (name a) == assmName 
@@ -130,11 +172,11 @@ split assmName (g : gs) = Subgoal (split' (assms g)) (cncls g) : gs
                                , Assumption (name assm ++ "2") f2 ]
             _               -> error "Invalid rule!"
 
--- disjE
+-- Apply disjE
 cases :: String -> Goal -> Goal
 cases assmName []       = error "Nothing to apply cases to!"
-cases assmName (g : gs) = Subgoal (left' (assms g)) (cncls g) 
-                        : Subgoal (right'(assms g)) (cncls g) 
+cases assmName (g : gs) = Subgoal (mvars g) (left' (assms g)) (cncls g) 
+                        : Subgoal (mvars g) (right'(assms g)) (cncls g) 
                         : gs
     where left' []          = error "Invalid rule!"
           left' (a : as)    = 
@@ -153,11 +195,11 @@ cases assmName (g : gs) = Subgoal (left' (assms g)) (cncls g)
             Disj f1 f2      -> Assumption assmName f2
             _               -> error "Invalid rule!"
 
--- impE
+-- Apply impE
 apply :: String -> Goal -> Goal
 apply assmName []       = error "Nothing to apply apply to!"
-apply assmName (g : gs) = Subgoal (delete assmName (assms g)) (left' (assms g))
-                        : Subgoal (right' (assms g)) (cncls g)
+apply assmName (g : gs) = Subgoal (mvars g) (delete assmName (assms g)) (left' (assms g))
+                        : Subgoal (mvars g) (right' (assms g)) (cncls g)
                         : gs
     where left' as          =  
             let f = find assmName as
@@ -172,10 +214,10 @@ apply assmName (g : gs) = Subgoal (delete assmName (assms g)) (left' (assms g))
           right'' assm      = case (formula assm) of
             Impl f1 f2      -> Assumption (name assm) f2
             _               -> error "Invalid rule!"
--- eqivE
+-- Apply eqivE
 equiv :: String -> Goal -> Goal
 equiv assmName []       = error "Nothing to apply equiv to!"
-equiv assmName (g : gs) = Subgoal (split' (assms g)) (cncls g) : gs
+equiv assmName (g : gs) = Subgoal (mvars g) (split' (assms g)) (cncls g) : gs
     where split' []         = error "Invalid rule!"
           split' (a : as)   = 
             if (name a) == assmName
@@ -186,13 +228,56 @@ equiv assmName (g : gs) = Subgoal (split' (assms g)) (cncls g) : gs
                                , Assumption (name assm ++ "2") (Impl f2 f1) ]
             _               -> error "Invalid rule!"
 
--- notE
+-- Apply notE
 turn :: String -> Goal -> Goal
 turn assmName []        = error "Nothing to applt turn to!"
-turn assmName (g : gs)  = Subgoal (delete assmName (assms g)) (subneg (assms g)) : gs
+turn assmName (g : gs)  = Subgoal 
+                            (mvars g) 
+                            (delete assmName (assms g)) 
+                            (subneg (assms g)) 
+                        : gs
     where subneg as     = 
             let f = find assmName as 
              in case (formula f) of
                 Neg f1  -> f1
                 _       -> error "Invalid rule!"
+
+-- Apply allE
+fix :: String -> String -> Goal -> Goal
+fix mvar assmName [] = error "Nothing to apply fix to!"
+fix mvar assmName (g : gs) = Subgoal (mvars g) (fix' (assms g)) (cncls g) 
+                            : gs
+    where fix' [] = error "Invalid rule!"
+          fix' (a : as) =
+            if (name a) == assmName
+                then case (formula a) of
+                    Alls x f -> Assumption assmName (substVar x mvar f) : as
+                    _        -> error "Invalid rule!"
+                else a : fix' as
+
+-- Apply exE
+gen :: String -> String -> Goal -> Goal
+gen mvar assmName [] = error "Nothing to apply free to!"
+gen mvar assmName (g : gs) = Subgoal 
+                                (insert (assms g)) 
+                                (gen' (assms g)) 
+                                (cncls g)
+                            : gs
+    where gen' [] = error "Invalid rule!"
+          gen' (a : as) =
+            if (name a) == assmName
+                then case (formula a) of
+                    Exis x f -> if notElem mvar (mvars g)
+                                then Assumption assmName (substVar x mvar f) : as
+                                else error "Invalid rule!"
+                    _        -> error "Invalid rule!"
+                else a : gen' as
+          insert as = case NatDed.lookup assmName as of
+                (Just a) -> case (formula a) of
+                    Exis x f -> if notElem mvar (mvars g)
+                                then mvar : (mvars g)
+                                else error "Invalid rule!"
+                    _        -> error "Invalid rule!"
+                Nothing  -> error "Invalid rule!"
+
 

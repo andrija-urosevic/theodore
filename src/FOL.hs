@@ -10,14 +10,17 @@ module FOL
     , mkConstTerm
     , mkVar
     , substTerm
+    , substVar
     , evalTerm
     , evalFormula
+    , freeVars
     , unify
     , unifyAndApply
     ) where
 
 import qualified Data.List as List
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 
 type Funs = [(String, Int)]
 
@@ -76,6 +79,24 @@ substTerm :: Assigment Term -> Term -> Term
 substTerm sigma (Var p)     = Map.findWithDefault (Var p) p sigma
 substTerm sigma (Fun f ts)  = Fun f (map (substTerm sigma) ts)
 
+substVar :: String -> String -> Formula -> Formula
+substVar x y Top = Top
+substVar x y Bot = Bot
+substVar x y (Neg f) = Neg (substVar x y f)
+substVar x y (Conj f1 f2) = Conj (substVar x y f1) (substVar x y f2)
+substVar x y (Disj f1 f2) = Disj (substVar x y f1) (substVar x y f2)
+substVar x y (Impl f1 f2) = Impl (substVar x y f1) (substVar x y f2)
+substVar x y (Eqiv f1 f2) = Eqiv (substVar x y f1) (substVar x y f2)
+substVar x y (Alls z f) = if x == z 
+                            then Alls z f 
+                            else Alls z (substVar x y f)
+substVar x y (Exis z f) = if x == z 
+                            then Alls z f
+                            else Exis z (substVar x y f)
+substVar x y (Rel r ts) = Rel r (map (substVarTerm x y) ts)
+    where substVarTerm x y (Var z) = if x == z then Var y else Var z
+          substVarTerm x y (Fun f ts) = Fun f (map (substVarTerm x y) ts)
+
 evalTerm :: FnInterp a -> Assigment a -> Term -> a
 evalTerm _  sigma (Var p)       = sigma Map.! p
 evalTerm fn sigma (Fun f ts)    = fn Map.! f
@@ -96,6 +117,27 @@ evalFormula model sigma (Alls x f)      = all (\val -> evalFormula model (Map.in
                                         $ univ model
 evalFormula model sigma (Exis x f)      = any (\val -> evalFormula model (Map.insert x val sigma) f)
                                         $ univ model
+
+freeVars :: Formula -> [String]
+freeVars f = freeVars' Set.empty f
+    where
+        freeVars' :: Set.Set String -> Formula -> [String]
+        freeVars' bound (Rel _ ts)   = filter (\t -> Set.notMember t bound) 
+                                     $ foldl (++) []
+                                     $ map freeVarsTerm ts
+        freeVars' bound (Neg f)      = freeVars' bound f
+        freeVars' bound (Conj f1 f2) = freeVars' bound f1 ++ freeVars' bound f2
+        freeVars' bound (Disj f1 f2) = freeVars' bound f1 ++ freeVars' bound f2
+        freeVars' bound (Impl f1 f2) = freeVars' bound f1 ++ freeVars' bound f2
+        freeVars' bound (Eqiv f1 f2) = freeVars' bound f1 ++ freeVars' bound f2
+        freeVars' bound (Alls x f)   = freeVars' (Set.insert x bound) f
+        freeVars' bound (Exis x f)   = freeVars' (Set.insert x bound) f
+        freeVars' bound _            = []
+
+        freeVarsTerm :: Term -> [String]
+        freeVarsTerm (Var x) = [x]
+        freeVarsTerm (Fun _ ts) = foldl1 (++) 
+                                $ map freeVarsTerm ts
 
 value :: [(String, Term)] -> String -> Maybe Term
 value [] x              = Nothing
