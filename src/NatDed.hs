@@ -18,6 +18,7 @@ module NatDed
     , equiv
     , turn
     , fix
+    , gen
     ) where
 
 import FOL
@@ -257,7 +258,7 @@ fix mvar assmName (g : gs) = Subgoal (mvars g) (fix' (assms g)) (cncls g)
 
 -- Apply exE
 gen :: String -> String -> Goal -> Goal
-gen mvar assmName [] = error "Nothing to apply free to!"
+gen mvar assmName [] = error "Nothing to apply gen to!"
 gen mvar assmName (g : gs) = Subgoal 
                                 (insert (assms g)) 
                                 (gen' (assms g)) 

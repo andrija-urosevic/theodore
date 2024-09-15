@@ -23,6 +23,7 @@
 \newunicodechar{⊢}{\ensuremath{\mathnormal\vdash}}
 \newunicodechar{∧}{\ensuremath{\mathnormal\land}}
 \newunicodechar{→}{\ensuremath{\mathnormal\to}}
+\newunicodechar{∀}{\ensuremath{\mathnormal\forall}}
 
 \lstset{
     frame=none,
@@ -324,7 +325,7 @@ Pravila uvodjenja i eliminacije egzistencijalnog kvantifikatora:
     \end{minipage}
 \end{center}
 
-Pored intuicionističkih pravila postoje i tri klasična pravila:
+Pored intuicionističkih pravila postoje i tri klasična pravila (koja interaktivni dokazivač teorema \textsc{Theodore} ne podržava):
 
 \begin{center}
     \begin{minipage}{\textwidth}
@@ -521,30 +522,33 @@ data Assumption = Assumption { name :: String
 type Assumptions = [Assumption]
 \end{lstlisting}
 
-Sa druge strane cilj, se može razbiti na više podciljeva. Zbog toga, cilj definišemo kao listu podciljeva, gde svaki podcilj karakteriše lista pretpostavki i zaključak. To je unutar \textsc{Theodore}-a definisano kao:
+Sa druge strane cilj, se može razbiti na više podciljeva. Zbog toga, cilj definišemo kao listu podciljeva, gde svaki podcilj karakteriše lista meta-promenljivih, lista pretpostavki i zaključak. To je unutar \textsc{Theodore}-a definisano kao:
 \begin{lstlisting}
-data Subgoal = Subgoal { assms :: Assumptions
+type MetaVars = [String]
+
+data Subgoal = Subgoal { mvars :: MetaVars
+                       , assms :: Assumptions
                        , cncls :: Formula }
 
 type Goal = [Subgoal]
 \end{lstlisting}
 
-Pretpostavimo da želimo da pokažemo teoremu $A \land B \implies B \land A$. Prvo definišemo odgovarajuću formulu:
+Pretpostavimo da želimo da pokažemo teoremu $(\forall x. P (x) \land Q (x)) \implies \forall x. Q (x) \land P (x)$. Prvo definišemo odgovarajuću formulu:
 \begin{lstlisting}
-fConjCommute = Impl
-        (Conj (mkVar "A") (mkVar "B"))
-        (Conj (mkVar "B") (mkVar "A"))
+fAllConjCommute = Impl 
+    (Alls "x" (Conj (Rel "P" [Var "x"]) (Rel "Q" [Var "x"]))) 
+    (Alls "x" (Conj (Rel "Q" [Var "x"]) (Rel "P" [Var "x"])))
 \end{lstlisting}
 Dalje, definišemo odgovarajući cilj koji želimo da pokažemo:
 \begin{lstlisting}
-thmConjCommute = [ Subgoal [] fConjCommute ]
+thmAllConjCommute = mkGoal [] fAllConjCommute
 \end{lstlisting}
-Cilj $\mathsf{thmConjCommute}$ ima praznu listu pretpostavki, a za zaključak ima formulu $\mathsf{fConjCommute}$. Kada ispišemo cilj $\mathsf{thmConjCommute}$ dobijamo:
+Cilj $\mathsf{thmAllConjCommute}$ ima praznu listu pretpostavki, a za zaključak ima formulu $\mathsf{fAllConjCommute}$. Kada ispišemo cilj $\mathsf{thmAllConjCommute}$ dobijamo:
 \begin{verbatim}
 Goal (1 subgoals):
 
 1. subgoal
-⊢ ((A ∧ B) → (B ∧ C))
+⊢ (∀x.(P(x) ∧ Q(x)) → ∀x.(Q(x) ∧ P(x)))
 \end{verbatim}
 
 Odgovarajući dokaz započinjemo uvođenjem implikacije. Uvođenje implikacije unutar \textsc{Theodore}-a je definisano kao:
@@ -574,46 +578,66 @@ Kompletna lista pravila prirodne dedukcije kao i odgovarajućih funkcija se nala
         $\implies_E$ & $\mathsf{apply :: String}$ $-> \mathsf{Goal}$ $-> \mathsf{Goal}$ \\
         $\iff_E$ & $\mathsf{equiv :: String}$ $-> \mathsf{Goal}$ $-> \mathsf{Goal}$ \\
         $\neg_E$ & $\mathsf{turn :: String}$ $-> \mathsf{Goal}$ $-> \mathsf{Goal}$ \\
-        $\forall_E$ & nedostaje \\
-        $\forall_I$ & nedostaje \\
-        $\exists_E$ & nedostaje \\
-        $\exists_I$ & nedostaje \\
+        $\forall_E$ & $\mathsf{fix :: String}$ $-> \mathsf{String}$ $-> \mathsf{Goal}$ $-> \mathsf{Goal}$ \\
+        $\forall_I$ & $\mathsf{free :: String}$ $-> \mathsf{Goal}$ $-> \mathsf{Goal}$ \\
+        $\exists_E$ & $\mathsf{gen :: String}$ $-> \mathsf{String}$ $-> \mathsf{Goal}$ $-> \mathsf{Goal}$ \\
+        $\exists_I$ & $\mathsf{set:: String}$ $-> \mathsf{Goal}$ $-> \mathsf{Goal}$ \\
     \end{tabular}
     \caption{Prabila prirodne dedukcije i njihove odgovarajuće funkcije unutar interaktivnog dokazivača \textsc{Theodore}.}
     \label{tab:natded}
 \end{table}
 
-Kada primenimo $\mathsf{intro}$ $"\mathsf{h}"$ nad ciljem $\mathsf{thmConjCommute}$, dobijamo:
+Kada primenimo $\mathsf{intro}$ $"\mathsf{h}"$ nad ciljem $\mathsf{thmAllConjCommute}$, dobijamo:
 \begin{verbatim}
 Goal (1 subgoals):
 
 1. subgoal
-• (A ∧ B) (h)
-⊢ (B ∧ C)
+• ∀x.(P(x) ∧ Q(x)) (h)
+⊢ ∀x.(Q(x) ∧ P(x))
 \end{verbatim}
+Dalje, možemo da prienimo uvođenje univerzalnog kvantifikatora, odnosno funkciju $\mathsf{free}$ $"\mathsf{y}"$ nad pretgodno definisanim ciljem. Dobijamo:
+\begin{verbatim}
+Goal (1 subgoals):
 
+1. subgoal
+- y
+• ∀x.(P(x) ∧ Q(x)) (h)
+⊢ (Q(y) ∧ P(y))
+\end{verbatim}
+Sada se možemo osloboditi univerzalnog kvantifikatora iz pretpostavke $\mathsf{h}$ funkcijom $\mathsf{fix}$ $"\mathsf{y}"$ $"\mathsf{h}"$. Dobijamo:
+\begin{verbatim}
+Goal (1 subgoals):
+
+1. subgoal
+- y
+• (P(y) ∧ Q(y)) (h)
+⊢ (Q(y) ∧ P(y))
+\end{verbatim}
 Dalje, možemo da primenimo eliminaciju konjunkcije, odnosno funkciju $\mathsf{split}$ $"\mathsf{h}"$ nad prehodno dobijenim ciljem. Dobijamo:
 \begin{verbatim}
 Goal (1 subgoals):
 
 1. subgoal
-• A (h1)
-• B (h2)
-⊢ (B ∧ A)
+- y
+• P(y) (h1)
+• Q(y) (h2)
+⊢ (Q(y) ∧ P(y))
 \end{verbatim}
 Nakon toga možemo primeniti uvođenje konjunkcije, odnosno funkciju $\mathsf{tear}$ nad prethodno dobijenim ciljem. Tada dobijamo 2 podcilja:
 \begin{verbatim}
 Goal (2 subgoals):
 
 1. subgoal
-• A (h1)
-• B (h2)
-⊢ B
+- y
+• P(y) (h1)
+• Q(y) (h2)
+⊢ Q(y)
 
 2. subgoal
-• A (h1)
-• B (h2)
-⊢ A
+- y
+• P(y) (h1)
+• Q(y) (h2)
+⊢ P(y)
 \end{verbatim}
 Prvi podcilj ne treba dalje dokazivati pa ga zatvaramo funkcijom $\mathsf{exact}$ $"\mathsf{h2}"$. Slično, drugi podcilj ne treba dalje dokazivati pa ga zatvaramo funkcijom $\mathsf{exact}$ $"\mathsf{h1}"$. Na kraju, dobijamo sledeću poruku koja nam kaže da smo završili dokaz:
 \begin{verbatim}
@@ -622,13 +646,18 @@ Nothing to prove!
 
 Celokupan dokaz možemo predstaviti i sačuvati kao kompoziciju funkcija, odnosno:
 \begin{lstlisting}
-proofConjCommute = exact "h1" . exact "h2" . tear . split "h" . intro "h"
+proofAllConjCommute = exact "h1" . exact "h2" 
+                    . tear . split "h" 
+                    . fix "y" "h" . free "y"
+                    . intro "h"
 \end{lstlisting}
 
 \section{Zaklju\v cak}
 \label{sec:zakljucak}
 
-Interaktivni dokazivač teorema \textsc{Theodore} omogućava dokazivanje teorema logike prvog reda, intuicionističkim pravilima prirodne dedukcije. 
+Interaktivni dokazivač teorema \textsc{Theodore} omogućava dokazivanje teorema logike prvog reda, intuicionističkim pravilima prirodne dedukcije. Karakteriše ga njegova minimalnost (što ga čini pogodnim za verifikaciju), proširivost (može se smatrati bibliotekom funkcionalnog programskog jezika \textsc{Haskell}), kao i jednostavno (u instaliranju i korišćenju). 
+
+\textsc{Theodore} predstavlja jednu celinu, ali pored toga, postoji prostor za nadogradnju, dodavanjem novih funkcionalnosti kao što su: razvijanje taktika (specijalizovanih algoritama za izvođenje određenih koraka pri dokazivanju), kao i razvijanje biblioteke osnovnih teorema logike prvog reda.
 
 \nocite{*}
 \printbibliography
