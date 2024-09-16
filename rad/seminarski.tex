@@ -57,15 +57,15 @@
 \maketitle
 
 \begin{abstract}
-    Interaktivni dokazivači teorema donose preciznost i poverljivost oblastima koji se u velikoj meri oslanjaju na formalnu korektnost. Sa jedne strane, omogućavaju korektnost softvera i hardvera za sisteme čija je tačnost od ključnog značaja. Dok sa druge strane, omogućavaju matematičku strogost pri formulaciji i dokazivanju matematičih teorema. U ovom radu će biti predstavljen interaktivni dokazivač teorema \textsc{Theodore} koji podržava formulaciju i dokazivanje teorema unutar okvira logike prvog reda.
+    Interaktivni dokazivači teorema donose preciznost i pouzdanost oblastima koje se u velikoj meri oslanjaju na formalnu korektnost. Sa jedne strane, omogućavaju korektnost softvera i hardvera za sisteme čija je tačnost od ključnog značaja, dok sa druge strane, omogućavaju matematičku strogost pri formulaciji i dokazivanju matematičih teorema. U ovom radu će biti predstavljen interaktivni dokazivač teorema \textsc{Theodore} koji podržava formulaciju i dokazivanje teorema unutar okvira logike prvog reda.
 \end{abstract}
 
 \section{Uvod}
 \label{sec:uvod}
 
-\textsc{Theodore} je interaktivni dokazivač teorema koji podržava formulisanje i dokazivanje teorema unutar okvira logike prvog reda. Implementiran je u funkcionalnom programskom jeziku \textsc{Haskell}. Pokreće se i izvršava u interaktivnom odruženju za \textsc{Haskell}: \textsc{GHCi}. Zbog toga, \textsc{Theodore} se može smatrati kao nadogradnja funkcionalnog programskog jezika \textsc{Haskell}. Još jedna karakteristika, interaktivni dokazivač teorema \textsc{Theodore} je minimalnost, odnosno jedino omogućava dokazivanje teorema primenom pravila prirodne dedukcije.
+\textsc{Theodore} je interaktivni dokazivač teorema koji podržava formulisanje i dokazivanje teorema unutar okvira logike prvog reda. Implementiran je u funkcionalnom programskom jeziku \textsc{Haskell}. Pokreće se i izvršava u interaktivnom odruženju za \textsc{Haskell}: \textsc{GHCi}. Zbog toga, \textsc{Theodore} se može smatrati kao nadogradnja funkcionalnog programskog jezika \textsc{Haskell}. Još jedna karakteristika interaktivnog dokazivača \textsc{Theodore} je minimalnost, odnosno jedino omogućava dokazivanje teorema primenom pravila prirodne dedukcije.
 
-Formulizacija teoreme, u interaktivnom dokazivaću teorema \textsc{Theodore}, se sastoji u formulisanju liste pretpostavki \textit{Assumptions} (od kojih svaka predstavlja formulu logike prvog reda), kao i zaključka \textit{Conclusion} koji, takođe, predstavlja formulu logike provog reda. Odnosno, iz liste pretpostavki $[\mathcal{H}_1, \mathcal{H}_2, \ldots, \mathcal{H}_n]$ izvodimo zaključak $\mathcal{C}$. To preciznije možemo da zapišemo kao:
+Formulizacija teoreme u interaktivnom dokazivaću teorema \textsc{Theodore} se sastoji u formulisanju liste pretpostavki \textit{Assumptions} (od kojih svaka predstavlja formulu logike prvog reda), kao i zaključka \textit{Conclusion} koji, takođe, predstavlja formulu logike provog reda. Odnosno, iz liste pretpostavki $[\mathcal{H}_1, \mathcal{H}_2, \ldots, \mathcal{H}_n]$ izvodimo zaključak $\mathcal{C}$. To preciznije možemo da zapišemo kao:
 \begin{samepage}
     \begin{center}
         \begin{minipage}{\textwidth}
@@ -88,7 +88,7 @@ Interaktivni dokazivač teorema \textsc{Theodore} pravila prirodne dedukcije pre
 
 Jedan od prvih interaktivni dokazivača teorema je \textsc{Automath}, koji je kreirao de Brujn (1967) \cite{deBruijn1983}. \textsc{Automath} se zasniva na \emph{prosto tipiziranom lambda računu} koga je uveo Čerč \cite{crc40, crc41}. Prosto tipizirani lambda račun je nastao po uzoru na \emph{teoriju tipova} koju je originalno uveo Rasel (1908) \cite{rus08}, pokušavajući da izbegne paradokse pri zasnivanju matematike preko teorije skupova. 
 
-Teorija tipova prati \emph{intuicionistički pristup} koji je nastao po Brauverovoj doktrini \cite{brw07}. Brauver je smatrao da se celokupna matematika, uključujući i sam koncept dokaza, zasniva na konceptu \emph{konstrukcije} (računa/algoritma/programa klasifikovanog tipom). Sa druge strane, bavljenje matematikom predstavlja fundamentalno ljudsku aktivnos, odnosno sposobnost izvršavanja algoritma u svrhu izvođenja mentalne konstrukcije je fundamentalno ljudska. 
+Teorija tipova prati \emph{intuicionistički pristup} koji je nastao po Brauverovoj doktrini \cite{brw07}. Brauver je smatrao da se celokupna matematika, uključujući i sam koncept dokaza, zasniva na konceptu \emph{konstrukcije} (računa/algoritma/programa klasifikovanog tipom). Sa druge strane, bavljenje matematikom predstavlja fundamentalno ljudsku aktivnost, odnosno sposobnost izvršavanja algoritma u svrhu izvođenja mentalne konstrukcije je fundamentalno ljudska. 
 
 Intuicionistički pristup, dalje razvijaju Kolmogorov \cite{kol32}, Hejting \cite{hey66}, Kari i Hauvard \cite{how80}. Pored njih, u velikoj meri je zaslužan Per Martin Luf, koji dalje razvija teoriju tipova u \emph{intuicionističku teoriju tipova} (engl.~\emph{intuitionistic type theory}) ili \emph{zavisnu teoriju tipova} (engl.~\emph{dependent type theory}) \cite{pml98, pml75, pml82, pml93, pml84}. Zavisnu teoriju tipova mnogi interaktivni dokazivači uzimaju kao polaznu tačku koju dalje nadograđuju. 
 
@@ -107,7 +107,7 @@ Ostatak rada je organizovan u 3 poglavlja. Poglavlje~\ref{sec:osnove} uvodi osno
 \subsection{Logika prvog reda}
 \label{sub:fol}
 
-Simbole logike provog reda čine logički simboli, funkcijski i relacijski simboli. Svakom funkcijsom i relacijskom simbolu dodeljujemo funkciju arnosti koja kazuje koliko argumenata ima odredjena funkcija, odnosno relacija. Funkcijske simboli arnosti $0$ nazivamo konstante, dok relacijske simbole arnosti $0$ nazivamo promenljive. Preciznije, definišemo signaturu $\mathcal{L}$ kao:
+Simbole logike provog reda čine logički simboli, funkcijski i relacijski simboli. Svakom funkcijsom i relacijskom simbolu dodeljujemo funkciju arnosti koja kazuje koliko argumenata ima odredjena funkcija, odnosno relacija. Funkcijske simboli arnosti $0$ nazivamo konstante, dok relacijske simbole arnosti $0$ nazivamo promenljive. Preciznije, definišemo signaturu $\mathcal{L}$ na sledeći način:
 
 \begin{definition}[Signatura]
     Signaturu $\mathcal{L} = (\Sigma, \Pi, ar)$ čini skup funkcijskih simbola $\Sigma$, skup relacijskih simbola $\Pi$ i funkcija arnosti $ar : \Sigma \cup \Pi \to \mathbb{N}$.
@@ -171,7 +171,7 @@ Za razliku od iskazne logike gde semantiku definišemo pomoću valuacije i inter
     Neka je dat jezik $\mathcal{L}$, $\mathcal{L}$-struktura $\mathcal{D}$ i valuacija $v$. Tada vrednost formule $F$ obeležavamo kao $\mathcal{D}_v (F)$ i definišemo kao:
     \begin{itemize}
         \item{Ako je formula $F$ konstanta $\top$, tada $\mathcal{D}_v(\top) = 1$.}
-        \item{Ako je formula $F$ konstanta $\bot$, tada $\mathcal{D}_v(\top) = 0$.}
+        \item{Ako je formula $F$ konstanta $\bot$, tada $\mathcal{D}_v(\bot) = 0$.}
         \item{Ako je formula $F$ atomička formula $p(t_1, \ldots, t_k)$, tada je $\mathcal{D}_v(p(t_1, \ldots, v_k)) = 1$ akko $(\mathcal{D}_v(t_1), \ldots, \mathcal{D}_v(t_k)) \in p_\mathcal{D}$, gde su $\mathcal{D}_v(t_1), \ldots, \mathcal{D}_v(t_k)$ vrednosti termova $t_1, \ldots, t_k$.}
         \item{Ako je formula $F$ oblika $\neg F'$, onda je $\mathcal{D}_v(\neg F') = 1$ akko $\mathcal{D}_v(F') = 0$.}
         \item{Ako je formula $F$ oblika $F_1 \land F_2$, onda je $\mathcal{D}_v(F_1 \land F_2) = 1$ akko $\mathcal{D}_v(F_1) = 1$ i $\mathcal{D}_v(F_2) = 1$.}
@@ -179,7 +179,7 @@ Za razliku od iskazne logike gde semantiku definišemo pomoću valuacije i inter
         \item{Ako je formula $F$ oblika $F_1 \implies F_2$, onda je $\mathcal{D}_v(F_1 \implies F_2) = 1$ akko $\mathcal{D}_v(F_1) = 0$ ili $\mathcal{D}_v(F_2) = 1$.}
         \item{Ako je formula $F$ oblika $F_1 \iff F_2$, onda je $\mathcal{D}_v(F_1 \iff F_2) = 1$ akko $\mathcal{D}_v(F_1) = \mathcal{D}_v(F_2)$.}
         \item{Ako je formula $F$ oblika $\exists x. F$, onda je $\mathcal{D}_v(\exists x. F) = 1$ akko postoji valuacija $v'$ dobijena od $v$ samo izmenom vrednosti promenljive $x$ tako da $\mathcal{D}_{v'}(F) = 1$.}
-        \item{Ako je formula $F$ oblika $\forall x. F$, onda je $\mathcal{D}_v(\forall x. F) = 1$ akko za svaku valuaciju $v'$ dobijenu od $v$ samo izmenom vrednosti promenljive $x$ tako da $\mathcal{D}_{v'}(F) = 1$.}
+        \item{Ako je formula $F$ oblika $\forall x. F$, onda je $\mathcal{D}_v(\forall x. F) = 1$ akko za svaku valuaciju $v'$ dobijenu od $v$ samo izmenom vrednosti promenljive $x$ važi da je $\mathcal{D}_{v'}(F) = 1$.}
     \end{itemize}
 \end{definition}
 
@@ -278,7 +278,7 @@ Pravila uvodjenja i eliminacije logičkih konstanti:
 \begin{center}
     \begin{minipage}{0.4\textwidth}
         \begin{prooftree}[$\top_{I}$]
-            \AxiomC{$\Gamma$}
+            \AxiomC{}
             \UnaryInfC{$\Gamma \vdash \top$}
         \end{prooftree}
     \end{minipage}
@@ -351,12 +351,12 @@ Pored intuicionističkih pravila postoje i tri klasična pravila (koja interakti
 \section{Theodore}
 \label{sec:theodore}
 
-Interaktivni dokazivač teorema \textsc{Theodore} je javno dostupan i može se preuzeti na sledećoj adressi: \texttt{https://github.com/andrija-urosevic/theodore}. Za pokretanje interaktivno dokazivača teorema \textsc{Theodore} potrebno je instalirati kompajler za funkcionalni programski jezik \textsc{Haskell} (\textsc{GHC} --- Glasgow Haskell Compiler), kao i njegovo interaktivno okruženje \textsc{GHCi}. Nakon instaliranja kompajlera \textsc{GHC} i interaktivnog okruženja \textsc{GHCi}, \textsc{Theodore} se pokreće tako što se u interaktivnom orkuženju \textsc{GHCi} učita fajl \texttt{NatDed.hs}, koji se nalazi u direktorijumu \texttt{src}.
+Interaktivni dokazivač teorema \textsc{Theodore} je javno dostupan i može se preuzeti na sledećoj adressi: \texttt{https://github.com/andrija-urosevic/theodore}. Za pokretanje interaktivno dokazivača teorema \textsc{Theodore} potrebno je instalirati kompajler za funkcionalni programski jezik \textsc{Haskell} (\textsc{GHC} --- Glasgow Haskell Compiler), kao i njegovo interaktivno okruženje \textsc{GHCi}. Nakon instaliranja kompajlera \textsc{GHC} i interaktivnog okruženja \textsc{GHCi}, \textsc{Theodore} se pokreće tako što se u interaktivnom okruženju \textsc{GHCi} učita fajl \texttt{NatDed.hs}, koji se nalazi u direktorijumu \texttt{src}.
 
 \subsection{Logika prvog reda unutar \textsc{Theodore}}
 \label{sub:theodore_fol}
 
-Tip svih termova možemo definisati kao tip svih promenljivih koje su okarakterisane imenom, kao i tip svih funkcija koje su okarakterisane imenom i listom termova. Konstante su funkcije arnosti $0$, odnostno funkcije okarakterisane imenom i praznom listom. To u \textsc{Haskell}-u zapisujemo kao:
+Tip svih termova možemo definisati kao tip svih promenljivih koje su okarakterisane imenom, kao i tip svih funkcija koje su okarakterisane imenom i listom termova. Konstante su funkcije arnosti $0$, odnosno funkcije okarakterisane imenom i praznom listom. To u \textsc{Haskell}-u zapisujemo kao:
 \begin{lstlisting}
 data Term
     = Var String
@@ -595,7 +595,7 @@ Goal (1 subgoals):
 • ∀x.(P(x) ∧ Q(x)) (h)
 ⊢ ∀x.(Q(x) ∧ P(x))
 \end{verbatim}
-Dalje, možemo da prienimo uvođenje univerzalnog kvantifikatora, odnosno funkciju $\mathsf{free}$ $"\mathsf{y}"$ nad pretgodno definisanim ciljem. Dobijamo:
+Dalje, možemo da primenimo uvođenje univerzalnog kvantifikatora, odnosno funkciju $\mathsf{free}$ $"\mathsf{y}"$ nad prethodno definisanim ciljem. Dobijamo:
 \begin{verbatim}
 Goal (1 subgoals):
 
@@ -655,7 +655,7 @@ proofAllConjCommute = exact "h1" . exact "h2"
 \section{Zaklju\v cak}
 \label{sec:zakljucak}
 
-Interaktivni dokazivač teorema \textsc{Theodore} omogućava dokazivanje teorema logike prvog reda, intuicionističkim pravilima prirodne dedukcije. Karakteriše ga njegova minimalnost (što ga čini pogodnim za verifikaciju), proširivost (može se smatrati bibliotekom funkcionalnog programskog jezika \textsc{Haskell}), kao i jednostavno (u instaliranju i korišćenju). 
+Interaktivni dokazivač teorema \textsc{Theodore} omogućava dokazivanje teorema logike prvog reda, intuicionističkim pravilima prirodne dedukcije. Karakteriše ga njegova minimalnost (što ga čini pogodnim za verifikaciju), proširivost (može se smatrati bibliotekom funkcionalnog programskog jezika \textsc{Haskell}), kao i jednostavnost (u instaliranju i korišćenju). 
 
 \textsc{Theodore} predstavlja jednu celinu, ali pored toga, postoji prostor za nadogradnju, dodavanjem novih funkcionalnosti kao što su: razvijanje taktika (specijalizovanih algoritama za izvođenje određenih koraka pri dokazivanju), kao i razvijanje biblioteke osnovnih teorema logike prvog reda.
 
