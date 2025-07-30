@@ -16,6 +16,7 @@ module FOL
     , freeVars
     , unify
     , unifyAndApply
+    , mathTexFormula
     ) where
 
 import qualified Data.List as List
@@ -61,13 +62,20 @@ instance Show Formula where
     show Bot            = "⊥"
     show (Rel r [])     = r
     show (Rel r ts)     = r ++ "(" ++ (List.intercalate ", " . map show) ts ++ ")"
-    show (Neg f)        = "(¬ " ++ show f ++ ")"
-    show (Conj f1 f2)   = "(" ++ show f1 ++ " ∧ " ++ show f2 ++ ")"
-    show (Disj f1 f2)   = "(" ++ show f1 ++ " ∨ " ++ show f2 ++ ")"
-    show (Impl f1 f2)   = "(" ++ show f1 ++ " → " ++ show f2 ++ ")"
-    show (Eqiv f1 f2)   = "(" ++ show f1 ++ " ↔ " ++ show f2 ++ ")"
-    show (Alls x f)     = "∀" ++ x ++ "." ++ show f
-    show (Exis x f)     = "∃" ++ x ++ "." ++ show f
+    show (Neg f)        = "¬ " ++ showSub f
+    show (Conj f1 f2)   = showSub f1 ++ " ∧ " ++ showSub f2
+    show (Disj f1 f2)   = showSub f1 ++ " ∨ " ++ showSub f2
+    show (Impl f1 f2)   = showSub f1 ++ " → " ++ showSub f2
+    show (Eqiv f1 f2)   = showSub f1 ++ " ↔ " ++ showSub f2
+    show (Alls x f)     = "∀" ++ x ++ "." ++ showSub f
+    show (Exis x f)     = "∃" ++ x ++ "." ++ showSub f
+
+showSub :: Formula -> String
+showSub f@(Rel _ _)     = show f
+showSub f@(Neg _)       = show f
+showSub f@(Alls _ _)    = show f
+showSub f@(Exis _ _)    = show f
+showSub f               = "(" ++ show f ++ ")"
 
 mkConstTerm :: String -> Term
 mkConstTerm c = Fun c []
@@ -188,3 +196,33 @@ unifyAndApply eqs = case unify eqs of
                     in Just
                      $ map (\(s, t) -> (substTerm sigma s, substTerm sigma t)) eqs
     Nothing     -> Nothing
+
+mathTexTerm :: Term -> String
+mathTexTerm (Var x)     = x
+mathTexTerm (Fun f [])  = f
+mathTexTerm (Fun f ts)  = f ++ "(" ++ mathTexTerms ts ++ ")"
+
+mathTexTerms :: [Term] -> String
+mathTexTerms ts = (List.intercalate ", " . map mathTexTerm) ts
+
+mathTexFormula :: Formula -> String
+mathTexFormula Top          = "\\top"
+mathTexFormula Bot          = "\\bot"
+mathTexFormula (Rel r [])   = r
+mathTexFormula (Rel r ts)   = r ++ "(" ++ mathTexTerms ts ++ ")"
+mathTexFormula (Neg f)      = "\\neg " ++ mathTexSubFormula f
+mathTexFormula (Conj f1 f2) = mathTexSubFormula f1 ++ " \\land " ++ mathTexSubFormula f2
+mathTexFormula (Disj f1 f2) = mathTexSubFormula f1 ++ " \\lor " ++ mathTexSubFormula f2
+mathTexFormula (Impl f1 f2) = mathTexSubFormula f1 ++ " \\implies " ++ mathTexSubFormula f2
+mathTexFormula (Eqiv f1 f2) = mathTexSubFormula f1 ++ " \\equiv " ++ mathTexSubFormula f2
+mathTexFormula (Alls x f)   = "\\forall " ++ x ++ ". " ++ mathTexSubFormula f
+mathTexFormula (Exis x f)   = "\\exists " ++ x ++ ". " ++ mathTexSubFormula f
+
+mathTexSubFormula :: Formula -> String
+mathTexSubFormula f@(Rel _ _)   = mathTexFormula f
+mathTexSubFormula f@(Neg _)     = mathTexFormula f
+mathTexSubFormula f@(Alls _ _)  = mathTexFormula f
+mathTexSubFormula f@(Exis _ _)  = mathTexFormula f
+mathTexSubFormula f             = "(" ++ mathTexFormula f ++ ")"
+
+

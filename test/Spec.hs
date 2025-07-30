@@ -10,7 +10,7 @@ import qualified Data.Map as Map
 import Propositional as Prop
 import NormalForm as NormalForm
 import FOL as FOL
-import NatDed as NatDed
+import Theodore as Theodore
 
 main :: IO ()
 main = defaultMain tests
