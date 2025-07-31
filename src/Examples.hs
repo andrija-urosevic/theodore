@@ -129,4 +129,6 @@ main = do
     genLatexTree proof_alls_modus_pones lemma_alls_modus_pones
     putStrLn "\nContrapostive:"
     genLatexTree proof_contrapositive lemma_contrapositive
+    putStrLn "\nDistributivity of universal quantifier over conjuction:"
+    genLatexTree proof_distrib_alls_conj lemma_distrib_alls_conj
 
