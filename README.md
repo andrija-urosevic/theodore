@@ -25,27 +25,27 @@ ghci Theodore.hs
 Terms represent variables and functions:
 
 ~~~
-Var "x"                 -- Variable x
-Fun "f" [Term]          -- Function f(x, ...)
+Var "x"             -- Variable x
+Fun "f" [Term]      -- Function f(x, ...)
 ~~~
 
 Formulas are constructed using:
 
 ~~~
-Top, Bot                -– ⊤ and ⊥
-Rel "p" [Term]     -– Predicate relation over terms
-Neg f                   -– ¬f
-Conj f1 f2              -– f1 ∧ f2
-Disj f1 f2              -– f1 ∨ f2
-Impl f1 f2              -– f1 → f2
-Eqiv f1 f2              -– f1 ↔ f2
-Alls "x" f                -– ∀x. f
-Exis "x" f                -– ∃x. f
+Top, Bot            -– ⊤ and ⊥
+Rel "p" [Term]      -– Predicate relation over terms
+Neg f               -– ¬f
+Conj f1 f2          -– f1 ∧ f2
+Disj f1 f2          -– f1 ∨ f2
+Impl f1 f2          -– f1 → f2
+Eqiv f1 f2          -– f1 ↔ f2
+Alls "x" f          -– ∀x. f
+Exis "x" f          -– ∃x. f
 ~~~
 
 ## Defining a Goal
 
-To prove $P \imples Q, P \vdash Q$, we define 2 assumptions, named `h1` and `h2`, and conclusion like follows:
+To prove $P \implies Q, P \vdash Q$, we define 2 assumptions, named `h1` and `h2`, and conclusion like follows:
 
 ~~~Haskell
 let a1 = Assumption "h1" (Impl (Rel "P" []) (Rel "Q" []))
@@ -88,25 +88,25 @@ If returns `[]`, all subgoals are proven.
 
 ## Proof Constructors
 
-Rule            | Constructor                   | Description
-----------------|-------------------------------|-------------
-                | `ToDo`                        | Proof ToDo later
-$\mathsf{asm}$  | `Exact asmName`               | Use an assumption
-$\implies_{I}$  | `ImplI asmName proof`         | Implication introduction
-$\land_{I}$     | `ConjI proof1 proof2`         | Conjunction introduction
-$\lor_{I_{l}}$  | `DisjlI proof`                | Disjunction introduction (left)
-$\lor_{I_{r}}$  | `DisjrI proof`                | Disjunction introduction (right)
-$\equiv_{I}$    | `EqivI asmName proof1 proof2` | Equivalence introduction
-$\neg_{I}$      | `NegI asmName proof`          | Negation introduction
-$\forall_{I}$   | `AllsI "x" proof`	            | Universal introduction
-$\exists_{I}$   | `ExisI "x" proof`	            | Existential introduction
-$\implies_{E}$  | `ImplE asmName proof1 proof2`	| Implication elimination
-$\land_{E}$     | `ConjE asmName proof`         | Conjunction elimination
-$\lor_{E}$      | `DisjE asmName proof1 proof2` | Disjunction elimination
-$\equiv_{E}$    | `EqivE asmName proof`         | Equivalence elimination
-$\neg_{E}$      | `NegE asmName proof`          | Negation elimination
-$\forall_{E}$   | `AllsE x asmName proof`       | Universal elimination
-$\exists_{E}$   | `ExisE x asmName proof`       | Existential elimination
+| Rule            | Constructor                   | Description                         |
+|-----------------|-------------------------------|-------------------------------------|
+| none            | `ToDo`                        | Proof ToDo later                    |
+| $\mathsf{asm}$  | `Exact asmName`               | Use an assumption                   |
+| $\implies_{I}$  | `ImplI asmName proof`         | Implication introduction            |
+| $\land_{I}$     | `ConjI proof1 proof2`         | Conjunction introduction            |
+| $\lor_{I_{l}}$  | `DisjlI proof`                | Disjunction introduction (left)     |
+| $\lor_{I_{r}}$  | `DisjrI proof`                | Disjunction introduction (right)    |
+| $\equiv_{I}$    | `EqivI asmName proof1 proof2` | Equivalence introduction            |
+| $\neg_{I}$      | `NegI asmName proof`          | Negation introduction               |
+| $\forall_{I}$   | `AllsI "x" proof`	          | Universal introduction              |
+| $\exists_{I}$   | `ExisI "x" proof`	          | Existential introduction            |
+| $\implies_{E}$  | `ImplE asmName proof1 proof2` | Implication elimination             |
+| $\land_{E}$     | `ConjE asmName proof`         | Conjunction elimination             |
+| $\lor_{E}$      | `DisjE asmName proof1 proof2` | Disjunction elimination             |
+| $\equiv_{E}$    | `EqivE asmName proof`         | Equivalence elimination             |
+| $\neg_{E}$      | `NegE asmName proof`          | Negation elimination                |
+| $\forall_{E}$   | `AllsE x asmName proof`       | Universal elimination               |
+| $\exists_{E}$   | `ExisE x asmName proof`       | Existential elimination             |
 
 # LaTeX Export
                               
@@ -146,7 +146,7 @@ $$
 \end{prooftree}
 $$
     
-## Constructing proofs gradualy
+## Constructing proofs gradually
 
 Use `ToDo`s to fill in proof step-by-step:
 
@@ -169,7 +169,7 @@ Goal (2 subgoals):
 ⊢ Q
 ~~~
 
-Now fill in ToDo's with `Exact "h2"` and `Exact "h1"`:
+Now fill in `ToDo`s with `Exact "h2"` and `Exact "h1"`:
 
 ~~~Haskell
 let proof = ImplE "h1" (Exact "h2") (Exact "h1")
